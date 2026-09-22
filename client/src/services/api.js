@@ -19,12 +19,37 @@ const getHeaders = (isAuth = false) => {
   return headers;
 };
 
+// Safe Response Parser (prevents "Unexpected end of JSON input" on HTML/empty responses)
+const parseResponse = async (res) => {
+  const text = await res.text();
+  let json = null;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch (err) {
+    // Non-JSON response (e.g., HTML from Vercel router)
+  }
+
+  if (!res.ok) {
+    if (res.status === 404 || res.status === 405 || !json) {
+      throw new Error(
+        'Backend server not reachable. Please deploy your backend server or configure VITE_API_URL in project settings.'
+      );
+    }
+    throw new Error(json.message || `Request failed with status ${res.status}`);
+  }
+
+  if (!json) {
+    throw new Error('Server returned an empty or invalid response.');
+  }
+
+  return json;
+};
+
 export const api = {
   // --- Public Endpoints ---
   async getLandingContent() {
     const res = await fetch(`${BASE_URL}/content`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to fetch content');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -34,9 +59,7 @@ export const api = {
       headers: getHeaders(false),
       body: JSON.stringify(leadData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to submit lead');
-    return data;
+    return await parseResponse(res);
   },
 
   // --- Auth Endpoints ---
@@ -46,17 +69,14 @@ export const api = {
       headers: getHeaders(false),
       body: JSON.stringify({ username, password })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Login failed');
-    return data;
+    return await parseResponse(res);
   },
 
   async getMe() {
     const res = await fetch(`${BASE_URL}/auth/me`, {
       headers: getHeaders(true)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Auth check failed');
+    const data = await parseResponse(res);
     return data.user;
   },
 
@@ -66,9 +86,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify({ currentPassword, newPassword })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to change password');
-    return data;
+    return await parseResponse(res);
   },
 
   // --- Content CMS ---
@@ -78,15 +96,13 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify(contentData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to update content');
-    return data;
+    return await parseResponse(res);
   },
 
   // --- Services CMS ---
   async getServices() {
     const res = await fetch(`${BASE_URL}/services`);
-    const data = await res.json();
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -96,8 +112,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify(serviceData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to create service');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -107,8 +122,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify(serviceData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to update service');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -117,9 +131,7 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders(true)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to delete service');
-    return data;
+    return await parseResponse(res);
   },
 
   // --- Case Studies CMS ---
@@ -129,8 +141,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify(csData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to create case study');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -140,8 +151,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify(csData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to update case study');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -150,9 +160,7 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders(true)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to delete case study');
-    return data;
+    return await parseResponse(res);
   },
 
   // --- Testimonials CMS ---
@@ -162,8 +170,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify(tData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to create testimonial');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -173,8 +180,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify(tData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to update testimonial');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -183,9 +189,7 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders(true)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to delete testimonial');
-    return data;
+    return await parseResponse(res);
   },
 
   // --- FAQs CMS ---
@@ -195,8 +199,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify(faqData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to create FAQ');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -206,8 +209,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify(faqData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to update FAQ');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -216,9 +218,7 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders(true)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to delete FAQ');
-    return data;
+    return await parseResponse(res);
   },
 
   // --- Stats CMS ---
@@ -228,8 +228,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify({ stats: statsArray })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to update stats');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -238,8 +237,7 @@ export const api = {
     const res = await fetch(`${BASE_URL}/leads`, {
       headers: getHeaders(true)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to fetch leads');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -249,8 +247,7 @@ export const api = {
       headers: getHeaders(true),
       body: JSON.stringify({ status })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to update lead status');
+    const data = await parseResponse(res);
     return data.data;
   },
 
@@ -259,8 +256,6 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders(true)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to delete lead');
-    return data;
+    return await parseResponse(res);
   }
 };
