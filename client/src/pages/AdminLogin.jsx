@@ -3,8 +3,8 @@ import { useAuth } from '../context/AuthContext';
 
 export default function AdminLogin({ navigateTo }) {
   const { login } = useAuth();
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('phonixe@2026');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -66,10 +66,10 @@ export default function AdminLogin({ navigateTo }) {
           </button>
         </form>
 
-        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-          <span>Default: <code>admin</code> / <code>phonixe@2026</code></span>
+        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.85rem' }}>
           <button 
-            style={{ color: 'var(--gold-light)', textDecoration: 'underline' }}
+            type="button"
+            style={{ color: 'var(--gold-light)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
             onClick={() => navigateTo('landing')}
           >
             &larr; Back to Site

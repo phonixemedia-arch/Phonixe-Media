@@ -2,7 +2,9 @@
  * Phonixe Media - API Client Service
  */
 
-const BASE_URL = '/api';
+const BASE_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api` 
+  : '/api';
 
 const getHeaders = (isAuth = false) => {
   const headers = {
