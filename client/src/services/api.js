@@ -6,11 +6,10 @@ const getBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`;
   }
-  // Auto-connect to deployed backend server when running on main Vercel frontend
-  if (typeof window !== 'undefined' && window.location.hostname.includes('phonixe-media.vercel.app')) {
-    return 'https://phonixe-media-3uts.vercel.app/api';
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return '/api';
   }
-  return '/api';
+  return 'https://phonixe-media-3uts.vercel.app/api';
 };
 
 const BASE_URL = getBaseUrl();

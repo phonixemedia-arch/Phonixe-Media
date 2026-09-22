@@ -51,46 +51,18 @@ const registerRoutes = (prefix = '') => {
 registerRoutes('/api');
 registerRoutes('');
 
-// Multi-path static frontend discovery (works on local, Render, Heroku, Docker, or Vercel)
-const candidatePaths = [
-  path.join(__dirname, 'public'),
-  path.join(__dirname, '..', 'dist'),
-  path.join(__dirname, '..', 'client', 'dist'),
-  path.join(process.cwd(), 'server', 'public'),
-  path.join(process.cwd(), 'dist'),
-  path.join(process.cwd(), 'client', 'dist')
-];
-
-let publicPath = candidatePaths.find(p => fs.existsSync(path.join(p, 'index.html'))) || path.join(__dirname, 'public');
-
-// Mount static middleware for all found paths
-candidatePaths.forEach(p => {
-  if (fs.existsSync(p)) {
-    app.use(express.static(p));
-  }
+// Status endpoints: Show "Phonixe Media Backend Server is working"
+app.get('/', (req, res) => {
+  res.send('Phonixe Media Backend Server is working');
 });
 
-// Fallback to React index.html for SPA client-side routing
-app.get('*', (req, res) => {
-  for (const p of candidatePaths) {
-    const indexPath = path.join(p, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      return res.sendFile(indexPath);
-    }
-  }
+app.get('/api', (req, res) => {
+  res.send('Phonixe Media Backend Server is working');
+});
 
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head><title>Phonixe Media API</title></head>
-    <body style="background:#0c0d11;color:#fff;font-family:sans-serif;padding:40px;text-align:center;">
-      <h1 style="color:#e5a93c;">🦅 Phonixe Media Backend API is Running</h1>
-      <p style="color:#9eabb8;">The React client build was not found in server/public or dist.</p>
-      <p style="margin-top:20px;"><strong>Admin Credentials:</strong> ID: <code>admin</code> | Password: <code>phonixe@2026</code></p>
-      <p><a href="/api/content" style="color:#ffd700;">View Live Content JSON &rarr;</a></p>
-    </body>
-    </html>
-  `);
+// Fallback for any unknown route
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint not found', message: 'Phonixe Media Backend Server is working' });
 });
 
 if (!process.env.VERCEL) {
