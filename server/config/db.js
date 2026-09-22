@@ -2,12 +2,15 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 
-const dataDir = path.join(__dirname, '..', 'data');
-const jsonDbPath = path.join(dataDir, 'db.json');
+const defaultDbPath = path.join(__dirname, '..', 'data', 'db.json');
+const dataDir = process.env.VERCEL ? path.join('/tmp', 'data') : path.join(__dirname, '..', 'data');
+const jsonDbPath = process.env.VERCEL ? path.join('/tmp', 'data', 'db.json') : defaultDbPath;
 
 // Ensure data folder exists
 if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+  try {
+    fs.mkdirSync(dataDir, { recursive: true });
+  } catch (e) {}
 }
 
 let isMongoConnected = false;
@@ -25,12 +28,22 @@ let jsonStore = {
 };
 
 // Load existing JSON DB if present
+let raw = null;
 if (fs.existsSync(jsonDbPath)) {
   try {
-    const raw = fs.readFileSync(jsonDbPath, 'utf8');
+    raw = fs.readFileSync(jsonDbPath, 'utf8');
+  } catch (err) {}
+} else if (fs.existsSync(defaultDbPath)) {
+  try {
+    raw = fs.readFileSync(defaultDbPath, 'utf8');
+  } catch (err) {}
+}
+
+if (raw) {
+  try {
     jsonStore = { ...jsonStore, ...JSON.parse(raw) };
   } catch (err) {
-    console.error('Error loading local db.json, creating fresh store:', err.message);
+    console.error('Error loading db.json:', err.message);
   }
 }
 

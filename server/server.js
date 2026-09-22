@@ -72,11 +72,15 @@ app.get('*', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log('====================================================');
-  console.log(`🚀 Phonixe Media Server listening on port ${PORT}`);
-  console.log(`🌐 Landing Page / API: http://localhost:${PORT}`);
-  console.log(`🛡️ Admin API:         http://localhost:${PORT}/api/auth/login`);
-  console.log(`📦 Health check:       http://localhost:${PORT}/api/health`);
-  console.log('====================================================');
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log('====================================================');
+    console.log(`🚀 Phonixe Media Server listening on port ${PORT}`);
+    console.log(`🌐 Landing Page / API: http://localhost:${PORT}`);
+    console.log(`🛡️ Admin API:         http://localhost:${PORT}/api/auth/login`);
+    console.log(`📦 Health check:       http://localhost:${PORT}/api/health`);
+    console.log('====================================================');
+  });
+}
+
+module.exports = app;

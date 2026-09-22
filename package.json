@@ -2,13 +2,28 @@
   "name": "phonixemedia-mern",
   "version": "1.0.0",
   "description": "Phonixe Media MERN Application - Landing Page & Admin CMS",
+  "main": "api/index.js",
   "scripts": {
-    "install:all": "npm install --prefix server && npm install --prefix client",
+    "postinstall": "cd client && npm install",
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
     "build:client": "npm run build --prefix client",
-    "build": "npm run build --prefix client",
-    "start": "npm start --prefix server"
+    "build": "node build.js",
+    "start": "node server/server.js"
   },
-  "keywords": ["mern", "social-media-agency", "landing-page", "admin-cms"]
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.4.1"
+  },
+  "keywords": [
+    "mern",
+    "social-media-agency",
+    "landing-page",
+    "admin-cms"
+  ]
 }
