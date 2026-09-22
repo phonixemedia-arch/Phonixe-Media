@@ -27,26 +27,29 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: '*',
+  origin: true,
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/content', contentRoutes);
-app.use('/api/services', servicesRoutes);
-app.use('/api/case-studies', caseStudiesRoutes);
-app.use('/api/testimonials', testimonialsRoutes);
-app.use('/api/faqs', faqRoutes);
-app.use('/api/stats', statsRoutes);
-app.use('/api/leads', leadsRoutes);
+// Register API Routes for both /api and root prefix (serverless compatibility)
+const registerRoutes = (prefix = '') => {
+  app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/content`, contentRoutes);
+  app.use(`${prefix}/services`, servicesRoutes);
+  app.use(`${prefix}/case-studies`, caseStudiesRoutes);
+  app.use(`${prefix}/testimonials`, testimonialsRoutes);
+  app.use(`${prefix}/faqs`, faqRoutes);
+  app.use(`${prefix}/stats`, statsRoutes);
+  app.use(`${prefix}/leads`, leadsRoutes);
+  app.get(`${prefix}/health`, (req, res) => {
+    res.json({ status: 'healthy', timestamp: new Date(), app: 'Phonixe Media MERN' });
+  });
+};
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date(), app: 'Phonixe Media MERN' });
-});
+registerRoutes('/api');
+registerRoutes('');
 
 // Multi-path static frontend discovery (works on local, Render, Heroku, Docker, or Vercel)
 const candidatePaths = [

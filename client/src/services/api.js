@@ -2,9 +2,18 @@
  * Phonixe Media - API Client Service
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api` 
-  : '/api';
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`;
+  }
+  // Auto-connect to deployed backend server when running on main Vercel frontend
+  if (typeof window !== 'undefined' && window.location.hostname.includes('phonixe-media.vercel.app')) {
+    return 'https://phonixe-media-3uts.vercel.app/api';
+  }
+  return '/api';
+};
+
+const BASE_URL = getBaseUrl();
 
 const getHeaders = (isAuth = false) => {
   const headers = {
