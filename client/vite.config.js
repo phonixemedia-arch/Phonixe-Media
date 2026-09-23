@@ -8,10 +8,16 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true
-      }
+      '/auth': 'http://localhost:5000',
+      '/content': 'http://localhost:5000',
+      '/services': 'http://localhost:5000',
+      '/case-studies': 'http://localhost:5000',
+      '/testimonials': 'http://localhost:5000',
+      '/faqs': 'http://localhost:5000',
+      '/stats': 'http://localhost:5000',
+      '/leads': 'http://localhost:5000',
+      '/health': 'http://localhost:5000',
+      '/api': 'http://localhost:5000'
     }
   },
   build: {

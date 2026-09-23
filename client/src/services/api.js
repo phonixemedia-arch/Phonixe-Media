@@ -3,13 +3,12 @@
  */
 
 const getBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`;
-  }
+  let url = import.meta.env.VITE_API_URL || 'https://phonixe-media-eight.vercel.app';
+  url = url.replace(/\/$/, '');
   if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    return '/api';
+    return '';
   }
-  return 'https://phonixe-media-3uts.vercel.app/api';
+  return url;
 };
 
 const BASE_URL = getBaseUrl();
@@ -34,13 +33,13 @@ const parseResponse = async (res) => {
   try {
     json = text ? JSON.parse(text) : null;
   } catch (err) {
-    // Non-JSON response (e.g., HTML from Vercel router)
+    // Non-JSON response
   }
 
   if (!res.ok) {
     if (res.status === 404 || res.status === 405 || !json) {
       throw new Error(
-        'Backend server not reachable. Please deploy your backend server or configure VITE_API_URL in project settings.'
+        'Backend server not reachable. Please check VITE_API_URL settings or verify the server status.'
       );
     }
     throw new Error(json.message || `Request failed with status ${res.status}`);
