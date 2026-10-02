@@ -67,14 +67,23 @@ export default function AdminLogin({ navigateTo }) {
       <div className="ambient-glow glow-bottom" aria-hidden="true"></div>
 
       <div className="admin-login-card glass-card">
-        <img 
-          src="/assets/logo-horizontal.png" 
-          alt="Phonixe Media" 
-          className="admin-login-logo" 
-          style={{ maxHeight: '48px', width: 'auto', margin: '0 auto 20px', objectFit: 'contain' }} 
-        />
-        <h2>Phonixe Media Admin</h2>
-        <p>Sign in to manage agency content, edit services, and view client leads.</p>
+        <a 
+          href="/" 
+          onClick={(e) => { e.preventDefault(); navigateTo('landing'); }}
+          style={{ display: 'inline-block', margin: '0 auto 20px', textDecoration: 'none', cursor: 'pointer' }}
+          title="Go to Phonixe Media Home Page"
+        >
+          <img 
+            src="/assets/logo-horizontal.png" 
+            alt="Phonixe Media" 
+            className="admin-login-logo" 
+            style={{ maxHeight: '48px', width: 'auto', margin: '0 auto', objectFit: 'contain', cursor: 'pointer', transition: 'opacity 0.2s' }} 
+            onMouseOver={(e) => e.currentTarget.style.opacity = '0.85'}
+            onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+          />
+        </a>
+        <h2 style={{ marginBottom: '12px' }}>Phonixe Media Admin</h2>
+        <p style={{ marginBottom: '28px', lineHeight: 1.55 }}>Sign in to manage agency content, edit services, and view client leads.</p>
 
         {inactivityNotice && (
           <div style={{

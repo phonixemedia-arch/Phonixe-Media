@@ -1704,6 +1704,17 @@ button {
   gap: 10px;
 }
 
+.admin-sidebar-header a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.admin-sidebar-header a:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
 .admin-main-content {
   flex: 1;
   padding: 36px 40px;
@@ -1718,13 +1729,36 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 28px;
-  padding-bottom: 20px;
+  margin-bottom: 32px;
+  padding-bottom: 22px;
   border-bottom: 1px solid var(--border-subtle);
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
 }
-.admin-page-title { font-size: 1.75rem; color: #FFF; margin: 0; }
+
+.admin-header-bar > div:first-child,
+.admin-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-page-title { 
+  font-size: 1.85rem; 
+  color: #FFF; 
+  margin: 0; 
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.admin-header-bar p,
+.admin-header-subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: 0;
+  line-height: 1.55;
+}
 
 /* Admin Table Container & Custom Gold Scrollbars */
 .admin-table-container {
@@ -1960,6 +1994,30 @@ button {
   border-radius: var(--radius-lg);
   padding: 28px;
   margin-bottom: 24px;
+}
+
+.admin-card-box h3 {
+  color: var(--gold-light);
+  margin-top: 0;
+  margin-bottom: 14px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.admin-card-box h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.admin-card-box p {
+  line-height: 1.6;
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: var(--text-muted);
 }
 
 /* Scroll Animation classes */

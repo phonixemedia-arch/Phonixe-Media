@@ -274,7 +274,18 @@ export default function AdminDashboard({ navigateTo }) {
       {/* Sidebar Navigation */}
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
-          <img src="/assets/logo-horizontal.png" alt="Phonixe Logo" style={{ maxHeight: '38px', width: 'auto', objectFit: 'contain' }} />
+          <a 
+            href="/" 
+            onClick={(e) => { e.preventDefault(); navigateTo('landing'); }}
+            style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none', cursor: 'pointer' }}
+            title="Go to Phonixe Media Home Page"
+          >
+            <img 
+              src="/assets/logo-horizontal.png" 
+              alt="Phonixe Logo" 
+              style={{ maxHeight: '38px', width: 'auto', objectFit: 'contain', cursor: 'pointer', transition: 'opacity 0.2s, transform 0.2s' }} 
+            />
+          </a>
         </div>
 
         <nav className="admin-nav">
