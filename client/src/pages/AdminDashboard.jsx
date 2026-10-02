@@ -352,7 +352,7 @@ export default function AdminDashboard({ navigateTo }) {
 
               <div className="admin-card-box">
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>WhatsApp Contact</span>
-                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#25D366', margin: '14px 0' }}>{content.whatsappNumber || '+91 98765 43210'}</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#25D366', margin: '14px 0' }}>{content.whatsappNumber || '+91 8799690069'}</div>
                 <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>Active for 1-click calls</span>
               </div>
             </div>

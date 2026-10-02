@@ -2,6 +2,25 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { DEFAULT_LANDING_DATA } from '../data/defaultData';
 
+// Helper to cleanly parse and separate metric values and titles without text overlapping
+const parseMetric = (str, fallbackTitle) => {
+  if (!str) return { value: '-', label: fallbackTitle };
+  const trimmed = String(str).trim();
+  const match = trimmed.match(/^([+$€₹£]?[0-9]+(?:\.[0-9]+)?(?:[KkMmBxX%+]|\s*\+)?)\s*(.*)$/);
+  if (match && match[1]) {
+    const val = match[1].trim();
+    const rest = match[2] ? match[2].trim() : '';
+    return {
+      value: val,
+      label: rest || fallbackTitle
+    };
+  }
+  return {
+    value: trimmed,
+    label: fallbackTitle
+  };
+};
+
 export default function LandingPage({ navigateTo }) {
   const [data, setData] = useState(DEFAULT_LANDING_DATA);
   const [loading, setLoading] = useState(false);
@@ -98,7 +117,8 @@ export default function LandingPage({ navigateTo }) {
 _Looking forward to discussing our 360° growth strategy!_`;
 
       const encoded = encodeURIComponent(textMsg);
-      const url = `https://wa.me/?text=${encoded}`;
+      const targetPhone = (data?.content?.whatsappNumber || '+91 8799690069').replace(/[^0-9]/g, '');
+      const url = `https://wa.me/${targetPhone}?text=${encoded}`;
       setWhatsappLink(url);
       setModalSuccess(true);
 
@@ -114,6 +134,10 @@ _Looking forward to discussing our 360° growth strategy!_`;
   };
 
   const c = data?.content || {};
+  const cleanWa = (c.whatsappNumber || '+91 8799690069').replace(/[^0-9]/g, '');
+  const contactEmail = c.email || 'phonixemedia@gmail.com';
+  const igHandle = c.instagramHandle || '@phonixe.media';
+  const igUrl = c.instagramUrl || 'https://www.instagram.com/phonixe.media/';
   const stats = data?.stats || [];
   const services = data?.services || [];
   const caseStudies = data?.caseStudies || [];
@@ -160,13 +184,13 @@ _Looking forward to discussing our 360° growth strategy!_`;
           {/* Nav Actions */}
           <div className="nav-actions">
             <a 
-              href={`https://wa.me/?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I'm interested in scaling my coaching brand.")}`}
+              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I'm interested in scaling my coaching brand.")}`}
               target="_blank" 
               rel="noopener noreferrer" 
               className="btn-whatsapp-header"
             >
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                <path d="M12.031 2C6.502 2 2.012 6.48 2.012 11.999c0 1.943.559 3.759 1.528 5.301L2 22l4.839-1.503a9.92 9.92 0 005.192 1.502h.005c5.526 0 10.016-4.48 10.016-10.001A9.957 9.957 0 0012.031 2zm0 18.258h-.004a8.21 8.21 0 01-4.226-1.168l-.303-.18-3.138.975.992-3.056-.198-.314A8.258 8.258 0 013.76 12c0-4.561 3.711-8.268 8.275-8.268 2.211 0 4.289.86 5.852 2.424a8.232 8.232 0 012.42 5.847c0 4.562-3.71 8.255-8.276 8.255zm4.53-6.177c-.248-.124-1.468-.724-1.696-.807-.228-.083-.394-.124-.56.124-.166.248-.642.807-.787.973-.145.166-.29.186-.538.062-.249-.124-1.049-.387-1.999-1.233-.739-.66-1.238-1.475-1.383-1.724-.145-.248-.016-.382.108-.506.112-.111.249-.29.373-.435.124-.145.166-.248.249-.414.083-.166.042-.311-.02-.435-.063-.124-.56-1.349-.768-1.848-.202-.485-.407-.419-.56-.427l-.477-.008c-.166 0-.435.062-.663.311-.228.249-.87 1.05-.87 2.56 0 1.51 1.1 2.969 1.253 3.176.154.208 2.164 3.303 5.242 4.632.733.316 1.305.505 1.751.647.737.234 1.408.201 1.939.122.591-.088 1.815-.742 2.072-1.459.257-.717.257-1.332.18-1.459-.077-.127-.243-.207-.492-.331z"/>
+              <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor">
+                <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
               </svg>
               <span>WhatsApp</span>
             </a>
@@ -276,7 +300,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
               <div className="mockup-header">
                 <div className="user-profile-badge">
                   <div className="profile-pic-container">
-                    <img src="/assets/logo-clean.png" alt="Phonixe Logo Icon" className="mini-gold-phoenix" />
+                    <img src="/assets/phoenix-badge.png" alt="Phonixe Logo Badge" className="mini-gold-phoenix" />
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -492,10 +516,10 @@ _Looking forward to discussing our 360° growth strategy!_`;
           <div className="problem-transition-banner glass-card reveal">
             <img src="/assets/logo-horizontal.png" alt="Phonixe Media" className="transition-logo" />
             <div style={{ flex: 1 }}>
-              <h3 style={{ fontSize: '1.45rem', marginBottom: '8px', color: 'var(--gold-bright)' }}>
+              <h3 style={{ fontSize: '1.45rem', marginBottom: '14px', lineHeight: 1.35, color: 'var(--gold-bright)' }}>
                 {c.problemTransitionText || 'That’s where Phonixe Media comes in.'}
               </h3>
-              <p style={{ fontSize: '0.95rem', color: '#DDE2EB', margin: 0 }}>
+              <p style={{ fontSize: '0.95rem', color: '#DDE2EB', lineHeight: 1.65, margin: 0 }}>
                 We eliminate the guesswork. We handle the strategic positioning, scripting, shooting direction, cinematic editing, and conversion systems so you can focus 100% on serving your clients.
               </p>
             </div>
@@ -557,8 +581,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <div className="process-step glass-card reveal">
               <div className="step-number-badge">01</div>
               <span className="step-tag">Phase 1 • Assessment</span>
-              <h3 style={{ fontSize: '1.35rem', marginBottom: '12px', color: '#fff' }}>Discover</h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+              <h3>Discover</h3>
+              <p className="step-desc">
                 Understand your business, audience, offer and current social media presence. We uncover what makes your voice uniquely powerful.
               </p>
               <div className="step-deliverables">
@@ -571,8 +595,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <div className="process-step glass-card reveal">
               <div className="step-number-badge">02</div>
               <span className="step-tag">Phase 2 • Architecture</span>
-              <h3 style={{ fontSize: '1.35rem', marginBottom: '12px', color: '#fff' }}>Strategize</h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+              <h3>Strategize</h3>
+              <p className="step-desc">
                 Build your positioning, content pillars, hooks, formats and growth strategy.
               </p>
               <div className="step-deliverables">
@@ -585,8 +609,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <div className="process-step glass-card reveal">
               <div className="step-number-badge">03</div>
               <span className="step-tag">Phase 3 • Execution</span>
-              <h3 style={{ fontSize: '1.35rem', marginBottom: '12px', color: '#fff' }}>Create</h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+              <h3>Create</h3>
+              <p className="step-desc">
                 Develop high-quality content including reels, carousels, stories and creatives + shooting assistance.
               </p>
               <div className="step-deliverables">
@@ -599,8 +623,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <div className="process-step glass-card reveal">
               <div className="step-number-badge">04</div>
               <span className="step-tag">Phase 4 • Scale</span>
-              <h3 style={{ fontSize: '1.35rem', marginBottom: '12px', color: '#fff' }}>Optimize</h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+              <h3>Optimize</h3>
+              <p className="step-desc">
                 Analyze performance, identify what works and continuously improve the strategy.
               </p>
               <div className="step-deliverables">
@@ -612,7 +636,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
           </div>
 
           <div className="process-guarantee-box glass-card text-center reveal">
-            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>⚡</div>
+            <div className="guarantee-icon">⚡</div>
             <h4>Spend Just 2–3 Hours Per Month Recording. We Handle The Rest.</h4>
             <p>No more staring at video editing timelines or wrestling with captions at midnight.</p>
             <button className="btn btn-gold" onClick={() => setIsModalOpen(true)}>
@@ -649,20 +673,27 @@ _Looking forward to discussing our 360° growth strategy!_`;
                   </div>
                 </div>
 
-                <div className="case-metrics-row">
-                  <div className="metric-item">
-                    <span className="metric-number">{cs.reach}</span>
-                    <span className="metric-title">Monthly Reach</span>
-                  </div>
-                  <div className="metric-item">
-                    <span className="metric-number">{cs.leads}</span>
-                    <span className="metric-title">Qualified Leads</span>
-                  </div>
-                  <div className="metric-item">
-                    <span className="metric-number">{cs.growth}</span>
-                    <span className="metric-title">Growth Factor</span>
-                  </div>
-                </div>
+                {(() => {
+                  const mReach = parseMetric(cs.reach, 'Monthly Reach');
+                  const mLeads = parseMetric(cs.leads, 'Qualified Leads');
+                  const mGrowth = parseMetric(cs.growth, 'Growth Factor');
+                  return (
+                    <div className="case-metrics-row">
+                      <div className="metric-item">
+                        <span className="metric-number">{mReach.value}</span>
+                        <span className="metric-title">{mReach.label}</span>
+                      </div>
+                      <div className="metric-item">
+                        <span className="metric-number">{mLeads.value}</span>
+                        <span className="metric-title">{mLeads.label}</span>
+                      </div>
+                      <div className="metric-item">
+                        <span className="metric-number">{mGrowth.value}</span>
+                        <span className="metric-title">{mGrowth.label}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="case-bottom-cta">
                   <button className="btn-text-gold" onClick={() => setIsModalOpen(true)}>
@@ -691,7 +722,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
                 <p className="testimonial-quote">"{t.quote}"</p>
                 <div className="testimonial-author">
                   <div className="placeholder-avatar">{t.avatarEmoji || '✨'}</div>
-                  <div>
+                  <div className="author-info">
                     <span className="author-name">{t.authorName}</span>
                     <span className="author-niche">{t.niche}</span>
                   </div>
@@ -714,7 +745,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </p>
 
               <div className="why-brand-highlight glass-card">
-                <img src="/assets/logo-clean.png" alt="Phonixe Logo" className="why-logo-img" />
+                <img src="/assets/phoenix-badge.png" alt="Phonixe Logo Badge" className="why-logo-img" />
                 <div className="why-brand-quote">
                   <strong>Born From Rising High:</strong> Like the mythical Phoenix, we take your hidden expertise and elevate it into a radiant authority that commands attention and converts into revenue.
                 </div>
@@ -812,13 +843,15 @@ _Looking forward to discussing our 360° growth strategy!_`;
       <section className="final-cta-section" id="cta">
         <div className="container">
           <div className="cta-banner-wrapper glass-card reveal text-center">
-            <img src="/assets/logo-clean.png" alt="Phonixe Media Brand Logo" className="cta-center-logo" />
-            <h2 className="cta-main-headline">
-              {c.ctaHeadline || 'Your Brand Has Expertise. Now Give It The Visibility It Deserves.'}
-            </h2>
-            <p className="cta-subheadline">
-              {c.ctaSubheadline || 'Let’s build a social media presence that makes your audience stop, trust and take action.'}
-            </p>
+            <img src="/assets/logo-horizontal.png" alt="Phonixe Media Brand Logo" className="cta-center-logo" />
+            <div className="cta-heading-container">
+              <h2 className="cta-main-headline">
+                {c.ctaHeadline || 'Your Brand Has Expertise. Now Give It The Visibility It Deserves.'}
+              </h2>
+              <p className="cta-subheadline">
+                {c.ctaSubheadline || 'Let’s build a social media presence that makes your audience stop, trust and take action.'}
+              </p>
+            </div>
 
             <div className="cta-buttons-row">
               <button className="btn btn-gold btn-xl shadow-gold-glow" onClick={() => setIsModalOpen(true)}>
@@ -829,12 +862,15 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </button>
 
               <a 
-                href={`https://wa.me/?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I want to talk about growing my brand.")}`}
+                href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I want to talk about growing my brand.")}`}
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="btn btn-whatsapp-large"
               >
-                Talk To Phonixe Media
+                <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
+                  <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+                </svg>
+                <span>Talk To Phonixe Media</span>
               </a>
             </div>
 
@@ -888,30 +924,29 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <h4 className="footer-heading">Connect With Us</h4>
             <ul className="footer-contact-list">
               <li>
-                <a href={c.instagramUrl || 'https://instagram.com'} target="_blank" rel="noopener noreferrer" className="footer-contact-item">
+                <a href={igUrl} target="_blank" rel="noopener noreferrer" className="footer-contact-item">
                   <span>📸</span>
-                  <span>Instagram: {c.instagramHandle || '@phonixemedia'}</span>
+                  <span>Instagram: {igHandle}</span>
                 </a>
               </li>
               <li>
-                <a href={`https://wa.me/?text=Hi%20Phonixe%20Media`} target="_blank" rel="noopener noreferrer" className="footer-contact-item">
-                  <span>💬</span>
-                  <span>WhatsApp: {c.whatsappNumber || '+91 98765 43210'}</span>
+                <a href={`https://wa.me/${cleanWa}?text=Hi%20Phonixe%20Media`} target="_blank" rel="noopener noreferrer" className="footer-contact-item">
+                  <svg viewBox="0 0 16 16" width="18" height="18" fill="#25D366" style={{ flexShrink: 0 }}>
+                    <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+                  </svg>
+                  <span>WhatsApp: {c.whatsappNumber || '+91 8799690069'}</span>
                 </a>
               </li>
               <li>
-                <a href={`mailto:${c.email || 'hello@phonixemedia.com'}`} className="footer-contact-item">
+                <a href={`mailto:${contactEmail}`} className="footer-contact-item">
                   <span>✉️</span>
-                  <span>{c.email || 'hello@phonixemedia.com'}</span>
+                  <span>{contactEmail}</span>
                 </a>
               </li>
             </ul>
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+            <div style={{ marginTop: '24px' }}>
               <button className="btn btn-gold btn-small" onClick={() => setIsModalOpen(true)}>
                 Book Strategy Call
-              </button>
-              <button className="btn btn-outline-glass btn-small" onClick={() => navigateTo('admin-login')}>
-                Admin CMS
               </button>
             </div>
           </div>
@@ -939,14 +974,14 @@ _Looking forward to discussing our 360° growth strategy!_`;
       <aside className="floating-whatsapp-container">
         <div className="whatsapp-tooltip">Chat with Phonixe Team</div>
         <a 
-          href={`https://wa.me/?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I'd like to scale my coaching brand.")}`}
+          href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I'd like to scale my coaching brand.")}`}
           target="_blank" 
           rel="noopener noreferrer" 
           className="floating-whatsapp-btn"
           aria-label="WhatsApp"
         >
-          <svg viewBox="0 0 24 24" width="30" height="30" fill="#FFF">
-            <path d="M12.031 2C6.502 2 2.012 6.48 2.012 11.999c0 1.943.559 3.759 1.528 5.301L2 22l4.839-1.503a9.92 9.92 0 005.192 1.502h.005c5.526 0 10.016-4.48 10.016-10.001A9.957 9.957 0 0012.031 2zm0 18.258h-.004a8.21 8.21 0 01-4.226-1.168l-.303-.18-3.138.975.992-3.056-.198-.314A8.258 8.258 0 013.76 12c0-4.561 3.711-8.268 8.275-8.268 2.211 0 4.289.86 5.852 2.424a8.232 8.232 0 012.42 5.847c0 4.562-3.71 8.255-8.276 8.255zm4.53-6.177c-.248-.124-1.468-.724-1.696-.807-.228-.083-.394-.124-.56.124-.166.248-.642.807-.787.973-.145.166-.29.186-.538.062-.249-.124-1.049-.387-1.999-1.233-.739-.66-1.238-1.475-1.383-1.724-.145-.248-.016-.382.108-.506.112-.111.249-.29.373-.435.124-.145.166-.248.249-.414.083-.166.042-.311-.02-.435-.063-.124-.56-1.349-.768-1.848-.202-.485-.407-.419-.56-.427l-.477-.008c-.166 0-.435.062-.663.311-.228.249-.87 1.05-.87 2.56 0 1.51 1.1 2.969 1.253 3.176.154.208 2.164 3.303 5.242 4.632.733.316 1.305.505 1.751.647.737.234 1.408.201 1.939.122.591-.088 1.815-.742 2.072-1.459.257-.717.257-1.332.18-1.459-.077-.127-.243-.207-.492-.331z"/>
+          <svg viewBox="0 0 16 16" width="30" height="30" fill="#FFF">
+            <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
           </svg>
         </a>
       </aside>
@@ -954,12 +989,15 @@ _Looking forward to discussing our 360° growth strategy!_`;
       {/* MOBILE STICKY BAR */}
       <div className="mobile-sticky-bar">
         <a 
-          href={`https://wa.me/?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I'd like to inquire.")}`}
+          href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I'd like to inquire.")}`}
           target="_blank" 
           rel="noopener noreferrer" 
           className="mobile-bar-btn btn-wa-mobile"
         >
-          WhatsApp
+          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor">
+            <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+          </svg>
+          <span>WhatsApp</span>
         </a>
         <button className="mobile-bar-btn btn-call-mobile" onClick={() => setIsModalOpen(true)}>
           Book Strategy Call &rarr;
@@ -1081,7 +1119,10 @@ _Looking forward to discussing our 360° growth strategy!_`;
                   Thank you! Your request has been securely recorded. Click below to continue directly on WhatsApp.
                 </p>
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp-large">
-                  Open WhatsApp Now
+                  <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
+                    <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+                  </svg>
+                  <span>Open WhatsApp Now</span>
                 </a>
               </div>
             )}

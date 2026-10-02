@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
 _Looking forward to discussing our 360° growth strategy!_`;
 
       const encodedMessage = encodeURIComponent(textMessage);
-      const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+      const whatsappUrl = `https://wa.me/918799690069?text=${encodedMessage}`;
 
       // Show success state inside modal
       leadForm.style.display = 'none';

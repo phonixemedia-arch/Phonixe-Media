@@ -14,11 +14,11 @@ const contentSchema = new mongoose.Schema({
   trustLine: { type: String, default: 'Strategy • Content • Personal Branding • Growth' },
   
   // Contact details
-  whatsappNumber: { type: String, default: '+91 98765 43210' },
+  whatsappNumber: { type: String, default: '+91 8799690069' },
   whatsappPrefillText: { type: String, default: "Hi Phonixe Media, I'm interested in scaling my coaching brand." },
-  email: { type: String, default: 'hello@phonixemedia.com' },
-  instagramHandle: { type: String, default: '@phonixemedia' },
-  instagramUrl: { type: String, default: 'https://instagram.com' },
+  email: { type: String, default: 'phonixemedia@gmail.com' },
+  instagramHandle: { type: String, default: '@phonixe.media' },
+  instagramUrl: { type: String, default: 'https://www.instagram.com/phonixe.media/' },
 
   // Sections config
   problemHeadline: { type: String, default: 'Posting Consistently Isn’t Enough.' },
