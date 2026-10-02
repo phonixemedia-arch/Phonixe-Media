@@ -1706,44 +1706,240 @@ button {
 
 .admin-main-content {
   flex: 1;
-  padding: 40px;
+  padding: 36px 40px;
   overflow-y: auto;
-  max-width: 1300px;
+  overflow-x: hidden;
+  max-width: 1600px;
+  width: 100%;
+  min-width: 0;
 }
 
 .admin-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--border-subtle);
+  gap: 16px;
+  flex-wrap: wrap;
 }
-.admin-page-title { font-size: 1.75rem; color: #FFF; }
+.admin-page-title { font-size: 1.75rem; color: #FFF; margin: 0; }
+
+/* Admin Table Container & Custom Gold Scrollbars */
+.admin-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  position: relative;
+  margin-top: 14px;
+}
+
+.admin-table-container::-webkit-scrollbar {
+  height: 9px;
+  width: 9px;
+}
+.admin-table-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+.admin-table-container::-webkit-scrollbar-thumb {
+  background: rgba(229, 169, 60, 0.45);
+  border-radius: 8px;
+  border: 2px solid #0F1117;
+}
+.admin-table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(229, 169, 60, 0.85);
+}
 
 .admin-table {
   width: 100%;
+  min-width: 1360px;
   border-collapse: collapse;
-  margin-top: 16px;
+  text-align: left;
 }
+
+.admin-table.table-overview {
+  min-width: 860px;
+}
+
 .admin-table th {
-  background: rgba(255, 255, 255, 0.03);
+  background: #11131A;
   color: var(--gold-light);
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 14px 18px;
+  letter-spacing: 0.06em;
+  padding: 16px 20px;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(229, 169, 60, 0.25);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  white-space: nowrap;
 }
+
 .admin-table td {
-  padding: 16px 18px;
+  padding: 16px 20px;
   font-size: 0.88rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   color: #DDE2EB;
+  vertical-align: middle;
 }
-.admin-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tr:hover td {
+  background: rgba(229, 169, 60, 0.035);
+}
+
+/* Explicit column widths preventing unwanted cell wraps */
+.admin-table .col-date { width: 110px; min-width: 110px; white-space: nowrap; }
+.admin-table .col-name { width: 220px; min-width: 200px; }
+.admin-table .col-wa { width: 190px; min-width: 180px; white-space: nowrap; }
+.admin-table .col-ig { width: 170px; min-width: 160px; white-space: nowrap; }
+.admin-table .col-domain { width: 180px; min-width: 170px; }
+.admin-table .col-goal { width: 280px; min-width: 240px; line-height: 1.45; }
+.admin-table .col-status { width: 140px; min-width: 130px; }
+.admin-table .col-actions { width: 180px; min-width: 170px; white-space: nowrap; text-align: right; }
+
+/* Leads CRM Toolbar Controls */
+.admin-crm-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.admin-crm-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-search-input {
+  background: #12141A;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  color: #FFF;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  min-width: 260px;
+  outline: none;
+  transition: all 0.2s;
+}
+.admin-search-input:focus {
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 10px rgba(229, 169, 60, 0.2);
+}
+
+.admin-filter-select {
+  background: #12141A;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  color: #FFF;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+.admin-filter-select:focus {
+  border-color: var(--gold-bright);
+}
+
+.scroll-hint-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--gold-light);
+  background: rgba(229, 169, 60, 0.08);
+  border: 1px solid rgba(229, 169, 60, 0.25);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+/* Session Indicators & Modals */
+.session-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(37, 211, 102, 0.1);
+  color: #86EFAC;
+  border: 1px solid rgba(37, 211, 102, 0.3);
+}
+
+.session-badge.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.inactivity-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.inactivity-modal {
+  background: #12141B;
+  border: 1.5px solid var(--gold-primary);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), var(--gold-glow);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Password Toggle & Login UI */
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.password-input-wrap input {
+  width: 100%;
+  padding-right: 44px;
+}
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+.password-toggle-btn:hover {
+  color: var(--gold-light);
+}
 
 .status-badge {
   display: inline-block;

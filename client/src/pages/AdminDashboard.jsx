@@ -3,10 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 export default function AdminDashboard({ navigateTo }) {
-  const { user, logout } = useAuth();
+  const { user, logout, extendSession, secondsRemaining, showInactivityWarning } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState('');
+
+  // Leads CRM Search & Filter States
+  const [leadSearch, setLeadSearch] = useState('');
+  const [leadStatusFilter, setLeadStatusFilter] = useState('all');
 
   // Data States
   const [content, setContent] = useState({});
@@ -23,6 +27,55 @@ export default function AdminDashboard({ navigateTo }) {
   const [newTestimonial, setNewTestimonial] = useState({ authorName: '', niche: '', quote: '', stars: 5, avatarEmoji: '✨', order: 1 });
   const [newFaq, setNewFaq] = useState({ question: '', answer: '', order: 1 });
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '' });
+
+  // Format idle countdown
+  const formatTime = (totalSec) => {
+    if (totalSec === undefined || totalSec === null) return '15:00';
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  // Export Leads to CSV
+  const exportLeadsToCsv = () => {
+    if (!leads.length) return alert('No leads to export.');
+    const headers = ['Date', 'Prospect Name', 'WhatsApp', 'Instagram', 'Coaching Domain', 'Goal', 'Status', 'Message'];
+    const rows = leads.map(l => [
+      `"${new Date(l.createdAt).toLocaleDateString()}"`,
+      `"${(l.name || '').replace(/"/g, '""')}"`,
+      `"${(l.whatsapp || '').replace(/"/g, '""')}"`,
+      `"${(l.instagram || '').replace(/"/g, '""')}"`,
+      `"${(l.niche || '').replace(/"/g, '""')}"`,
+      `"${(l.goal || '').replace(/"/g, '""')}"`,
+      `"${(l.status || '').replace(/"/g, '""')}"`,
+      `"${(l.message || '').replace(/"/g, '""')}"`
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `phonixe_leads_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    triggerToast('📥 Leads exported to CSV successfully!');
+  };
+
+  // Filtered Leads
+  const filteredLeads = leads.filter(lead => {
+    const matchesStatus = leadStatusFilter === 'all' || lead.status === leadStatusFilter;
+    const term = leadSearch.toLowerCase().trim();
+    if (!term) return matchesStatus;
+    const matchesTerm = (
+      (lead.name && lead.name.toLowerCase().includes(term)) ||
+      (lead.whatsapp && lead.whatsapp.toLowerCase().includes(term)) ||
+      (lead.instagram && lead.instagram.toLowerCase().includes(term)) ||
+      (lead.niche && lead.niche.toLowerCase().includes(term)) ||
+      (lead.goal && lead.goal.toLowerCase().includes(term)) ||
+      (lead.message && lead.message.toLowerCase().includes(term))
+    );
+    return matchesStatus && matchesTerm;
+  });
 
   // Load everything
   const loadDashboardData = async () => {
@@ -326,9 +379,15 @@ export default function AdminDashboard({ navigateTo }) {
                 <h1 className="admin-page-title">Agency Overview</h1>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Welcome back, {user?.name || 'Phonixe Admin'}. Here is your live agency performance snapshot.</p>
               </div>
-              <button className="btn btn-gold btn-small" onClick={() => setActiveTab('leads')}>
-                View Inquiries ({leads.length})
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div className={`session-badge ${secondsRemaining <= 120 ? 'warning' : ''}`} title="Admin session automatically locks after 15m of user inactivity">
+                  <span>{secondsRemaining <= 120 ? '⚠️' : '🟢'}</span>
+                  <span>Session: <strong>{formatTime(secondsRemaining)}</strong></span>
+                </div>
+                <button className="btn btn-gold btn-small" onClick={() => setActiveTab('leads')}>
+                  View Inquiries ({leads.length})
+                </button>
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '36px' }}>
@@ -352,40 +411,59 @@ export default function AdminDashboard({ navigateTo }) {
 
               <div className="admin-card-box">
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>WhatsApp Contact</span>
-                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#25D366', margin: '14px 0' }}>{content.whatsappNumber || '+91 8799690069'}</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#25D366', margin: '14px 0', whiteSpace: 'nowrap' }}>{content.whatsappNumber || '+91 8799690069'}</div>
                 <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>Active for 1-click calls</span>
               </div>
             </div>
 
-            <div className="admin-card-box">
-              <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '16px' }}>Recent Inbound Leads</h3>
+            <div className="admin-card-box" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                <h3 style={{ fontSize: '1.2rem', color: '#fff', margin: 0 }}>Recent Inbound Leads</h3>
+                {leads.length > 0 && (
+                  <button className="btn btn-outline-glass btn-small" onClick={() => setActiveTab('leads')}>
+                    View All Inquiries ({leads.length}) &rarr;
+                  </button>
+                )}
+              </div>
               {leads.length === 0 ? (
                 <p style={{ color: 'var(--text-dim)' }}>No strategy call inquiries yet. Test the booking modal on the live landing page!</p>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="admin-table">
+                <div className="admin-table-container">
+                  <table className="admin-table table-overview">
                     <thead>
                       <tr>
-                        <th>Name</th>
-                        <th>WhatsApp</th>
-                        <th>Niche / Domain</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th style={{ width: '220px' }}>Prospect Name</th>
+                        <th style={{ width: '180px' }}>WhatsApp</th>
+                        <th style={{ width: '180px' }}>Niche / Domain</th>
+                        <th style={{ width: '130px' }}>Status</th>
+                        <th style={{ width: '140px', textAlign: 'right' }}>Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {leads.slice(0, 5).map(l => (
                         <tr key={l._id}>
-                          <td><strong>{l.name}</strong><br/><small style={{ color: 'var(--text-dim)' }}>{l.instagram}</small></td>
                           <td>
-                            <a href={`https://wa.me/${l.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366' }}>
-                              {l.whatsapp}
+                            <strong style={{ color: '#FFF' }}>{l.name}</strong><br/>
+                            <small style={{ color: 'var(--text-dim)' }}>{l.instagram || 'No handle provided'}</small>
+                          </td>
+                          <td>
+                            <a 
+                              href={`https://wa.me/${l.whatsapp.replace(/[^0-9]/g, '')}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              style={{ color: '#25D366', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                            >
+                              <span>💬</span> <span>{l.whatsapp}</span>
                             </a>
                           </td>
-                          <td>{l.niche}</td>
-                          <td><span className={`status-badge ${l.status}`}>{l.status}</span></td>
                           <td>
-                            <button className="btn btn-gold btn-small" onClick={() => setActiveTab('leads')}>
+                            <span style={{ color: 'var(--gold-bright)', fontWeight: 600 }}>{l.niche}</span>
+                          </td>
+                          <td>
+                            <span className={`status-badge ${l.status}`}>{l.status}</span>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <button className="btn btn-gold btn-small" onClick={() => setActiveTab('leads')} style={{ padding: '6px 14px' }}>
                               View Details
                             </button>
                           </td>
@@ -407,55 +485,139 @@ export default function AdminDashboard({ navigateTo }) {
                 <h1 className="admin-page-title">Inbound Strategy Inquiries ({leads.length})</h1>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>All discovery calls and audit requests submitted through the landing page.</p>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-outline-glass btn-small"
+                  onClick={exportLeadsToCsv}
+                >
+                  📥 Export to CSV
+                </button>
+                <div className={`session-badge ${secondsRemaining <= 120 ? 'warning' : ''}`} title="Admin session automatically locks after 15m idle">
+                  <span>{secondsRemaining <= 120 ? '⚠️' : '🟢'}</span>
+                  <span>Session: <strong>{formatTime(secondsRemaining)}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Toolbar with Search, Filter & Scroll tip */}
+            <div className="admin-crm-toolbar">
+              <div className="admin-crm-controls">
+                <input 
+                  type="text"
+                  className="admin-search-input"
+                  placeholder="🔍 Search name, phone, domain, notes..."
+                  value={leadSearch}
+                  onChange={(e) => setLeadSearch(e.target.value)}
+                />
+                <select 
+                  className="admin-filter-select"
+                  value={leadStatusFilter}
+                  onChange={(e) => setLeadStatusFilter(e.target.value)}
+                >
+                  <option value="all">All Statuses ({leads.length})</option>
+                  <option value="new">New ({leads.filter(l => l.status === 'new').length})</option>
+                  <option value="contacted">Contacted ({leads.filter(l => l.status === 'contacted').length})</option>
+                  <option value="qualified">Qualified ({leads.filter(l => l.status === 'qualified').length})</option>
+                  <option value="closed">Closed ({leads.filter(l => l.status === 'closed').length})</option>
+                </select>
+                {(leadSearch || leadStatusFilter !== 'all') && (
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-glass btn-small"
+                    onClick={() => { setLeadSearch(''); setLeadStatusFilter('all'); }}
+                    style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                  >
+                    Clear Filters
+                  </button>
+                )}
+                <span style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                  Showing {filteredLeads.length} of {leads.length} lead{leads.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              <div className="scroll-hint-pill">
+                <span>↔️</span>
+                <span>Scroll table horizontally for full prospect information & actions</span>
+              </div>
             </div>
 
             {leads.length === 0 ? (
               <div className="admin-card-box text-center">
                 <p style={{ color: 'var(--text-muted)' }}>No leads in the database yet. Submit an inquiry from the landing page to test!</p>
               </div>
+            ) : filteredLeads.length === 0 ? (
+              <div className="admin-card-box text-center">
+                <p style={{ color: 'var(--text-muted)' }}>No inquiries match your current search/filter.</p>
+              </div>
             ) : (
-              <div className="admin-card-box" style={{ overflowX: 'auto', padding: 0 }}>
+              <div className="admin-table-container">
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Prospect Name</th>
-                      <th>WhatsApp</th>
-                      <th>Instagram</th>
-                      <th>Coaching Domain</th>
-                      <th>Goal</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      <th className="col-date">Date</th>
+                      <th className="col-name">Prospect Name</th>
+                      <th className="col-wa">WhatsApp</th>
+                      <th className="col-ig">Instagram</th>
+                      <th className="col-domain">Coaching Domain</th>
+                      <th className="col-goal">Goal</th>
+                      <th className="col-status">Status</th>
+                      <th className="col-actions">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {leads.map(lead => {
+                    {filteredLeads.map(lead => {
                       const cleanWa = lead.whatsapp.replace(/[^0-9]/g, '');
                       const prefilledChat = `https://wa.me/${cleanWa}?text=${encodeURIComponent(`Hi ${lead.name}, thank you for requesting a Strategy Audit with Phonixe Media! Let's discuss your coaching brand growth.`)}`;
+                      const cleanIg = (lead.instagram || '').replace(/^@/, '').trim();
                       return (
                         <tr key={lead._id}>
-                          <td style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
+                          <td className="col-date" style={{ fontSize: '0.82rem', color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
                             {new Date(lead.createdAt).toLocaleDateString()}
                           </td>
-                          <td>
-                            <strong>{lead.name}</strong>
+                          <td className="col-name">
+                            <strong style={{ color: '#FFF', fontSize: '0.94rem' }}>{lead.name}</strong>
                             {lead.message && (
-                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>"{lead.message}"</p>
+                              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0', lineHeight: 1.4 }}>"{lead.message}"</p>
                             )}
                           </td>
-                          <td>
-                            <a href={prefilledChat} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', fontWeight: 600 }}>
-                              💬 {lead.whatsapp}
+                          <td className="col-wa">
+                            <a 
+                              href={prefilledChat} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              style={{ color: '#25D366', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                            >
+                              <span>💬</span> <span>{lead.whatsapp}</span>
                             </a>
                           </td>
-                          <td>{lead.instagram}</td>
-                          <td><span style={{ color: 'var(--gold-light)' }}>{lead.niche}</span></td>
-                          <td style={{ fontSize: '0.8rem' }}>{lead.goal}</td>
-                          <td>
+                          <td className="col-ig">
+                            {cleanIg ? (
+                              <a 
+                                href={`https://instagram.com/${cleanIg}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                style={{ color: 'var(--gold-light)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}
+                              >
+                                <span>📸</span> @{cleanIg}
+                              </a>
+                            ) : (
+                              <span style={{ color: 'var(--text-dim)' }}>—</span>
+                            )}
+                          </td>
+                          <td className="col-domain">
+                            <span style={{ color: 'var(--gold-bright)', fontWeight: 600, background: 'rgba(229, 169, 60, 0.1)', padding: '3px 10px', borderRadius: '4px', border: '1px solid rgba(229, 169, 60, 0.25)', fontSize: '0.82rem', display: 'inline-block' }}>
+                              {lead.niche}
+                            </span>
+                          </td>
+                          <td className="col-goal" style={{ fontSize: '0.84rem', color: '#DDE2EB', lineHeight: 1.45 }}>
+                            {lead.goal}
+                          </td>
+                          <td className="col-status">
                             <select 
                               value={lead.status} 
                               onChange={(e) => handleLeadStatus(lead._id, e.target.value)}
-                              style={{ background: '#12141A', color: '#fff', border: '1px solid var(--border-gold)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.78rem' }}
+                              className="admin-filter-select"
+                              style={{ padding: '5px 10px', fontSize: '0.8rem', width: '100%' }}
                             >
                               <option value="new">New</option>
                               <option value="contacted">Contacted</option>
@@ -463,12 +625,22 @@ export default function AdminDashboard({ navigateTo }) {
                               <option value="closed">Closed</option>
                             </select>
                           </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                              <a href={prefilledChat} target="_blank" rel="noopener noreferrer" className="btn btn-gold btn-small" style={{ fontSize: '0.75rem', padding: '4px 10px' }}>
+                          <td className="col-actions">
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                              <a 
+                                href={prefilledChat} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="btn btn-gold btn-small" 
+                                style={{ fontSize: '0.78rem', padding: '6px 14px', whiteSpace: 'nowrap' }}
+                              >
                                 WhatsApp
                               </a>
-                              <button onClick={() => handleDeleteLead(lead._id)} style={{ color: '#EF4444', fontSize: '0.85rem' }} title="Delete">
+                              <button 
+                                onClick={() => handleDeleteLead(lead._id)} 
+                                style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#EF4444', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontSize: '0.9rem', transition: 'all 0.2s' }} 
+                                title="Delete inquiry record"
+                              >
                                 🗑️
                               </button>
                             </div>
@@ -1075,42 +1247,127 @@ export default function AdminDashboard({ navigateTo }) {
             <div className="admin-header-bar">
               <div>
                 <h1 className="admin-page-title">Admin Account Security</h1>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Update your administrator login password.</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Manage session security, idle protection, and administrator credentials.</p>
+              </div>
+              <div className={`session-badge ${secondsRemaining <= 120 ? 'warning' : ''}`}>
+                <span>{secondsRemaining <= 120 ? '⚠️' : '🟢'}</span>
+                <span>Session Auto-Lock: <strong>{formatTime(secondsRemaining)}</strong></span>
               </div>
             </div>
 
-            <div className="admin-card-box" style={{ maxWidth: '500px' }}>
-              <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div className="form-group">
-                  <label>Current Password</label>
-                  <input 
-                    type="password" 
-                    required
-                    placeholder="Enter current password"
-                    value={pwForm.currentPassword}
-                    onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
-                  />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', alignItems: 'start' }}>
+              {/* Session Protection Box */}
+              <div className="admin-card-box">
+                <h3 style={{ color: 'var(--gold-light)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🛡️</span> Inactivity Auto-Logout Policy
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '18px' }}>
+                  To prevent unauthorized access, your administrator session is monitored in real-time. If no user actions (clicks, typing, scroll, touches) occur for <strong>15 minutes</strong>, you are automatically signed out.
+                </p>
+
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '14px 16px', marginBottom: '18px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--text-dim)' }}>Session Status:</span>
+                    <span style={{ color: '#34D399', fontWeight: 700 }}>🟢 Active & Monitored</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--text-dim)' }}>Idle Timeout:</span>
+                    <span style={{ color: '#FFF' }}>15 Minutes (900 seconds)</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--text-dim)' }}>Time Until Auto-Lock:</span>
+                    <span style={{ color: 'var(--gold-bright)', fontWeight: 800, fontSize: '0.92rem' }}>{formatTime(secondsRemaining)}</span>
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <label>New Password (min 6 chars)</label>
-                  <input 
-                    type="password" 
-                    required
-                    placeholder="Enter new password"
-                    value={pwForm.newPassword}
-                    onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
-                  />
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-gold btn-small"
+                    onClick={() => { extendSession(); triggerToast('⏱️ Session timer reset to 15:00!'); }}
+                  >
+                    Reset Inactivity Timer
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-glass btn-small"
+                    onClick={() => { logout('manual'); navigateTo('admin-login'); }}
+                  >
+                    Sign Out Now
+                  </button>
                 </div>
+              </div>
 
-                <button type="submit" className="btn btn-gold btn-large">
-                  Update Password
-                </button>
-              </form>
+              {/* Password Change Box */}
+              <div className="admin-card-box">
+                <h3 style={{ color: 'var(--gold-light)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🔑</span> Change Password
+                </h3>
+                <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div className="form-group">
+                    <label>Current Password</label>
+                    <input 
+                      type="password" 
+                      required
+                      placeholder="Enter current password"
+                      value={pwForm.currentPassword}
+                      onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>New Password (min 6 chars)</label>
+                    <input 
+                      type="password" 
+                      required
+                      placeholder="Enter new password"
+                      value={pwForm.newPassword}
+                      onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
+                    />
+                  </div>
+
+                  <button type="submit" className="btn btn-gold btn-large">
+                    Update Password
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         )}
       </main>
+
+      {/* Inactivity Warning Modal */}
+      {showInactivityWarning && (
+        <div className="inactivity-modal-overlay">
+          <div className="inactivity-modal">
+            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>⏱️</div>
+            <h3 style={{ color: '#FFF', fontSize: '1.4rem', marginBottom: '8px' }}>Session Expiring Soon</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', marginBottom: '24px', lineHeight: 1.5 }}>
+              Due to 15 minutes of inactivity, your administrator session will automatically lock in{' '}
+              <strong style={{ color: '#FBBF24', fontSize: '1.2rem', display: 'inline-block', padding: '0 4px' }}>
+                {secondsRemaining}s
+              </strong>{' '}
+              to protect agency data and client leads.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button 
+                type="button" 
+                className="btn btn-gold btn-large"
+                onClick={extendSession}
+              >
+                Stay Logged In
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-outline-glass btn-large"
+                onClick={() => { logout('manual'); navigateTo('admin-login'); }}
+              >
+                Sign Out Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

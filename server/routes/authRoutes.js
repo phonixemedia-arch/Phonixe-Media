@@ -6,12 +6,55 @@ const { auth, JWT_SECRET } = require('../middleware/auth');
 const { getStore, saveJsonDb, isConnectedToMongo } = require('../config/db');
 const User = require('../models/User');
 
+// Rate limiting map for login brute-force defense
+const loginAttempts = new Map();
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 5 * 60 * 1000; // 5-minute lockout
+
+const checkRateLimit = (key) => {
+  const record = loginAttempts.get(key);
+  if (!record) return { allowed: true };
+  if (record.lockoutUntil && Date.now() < record.lockoutUntil) {
+    const remainingSec = Math.ceil((record.lockoutUntil - Date.now()) / 1000);
+    return { allowed: false, remainingSec };
+  }
+  if (record.lockoutUntil && Date.now() >= record.lockoutUntil) {
+    loginAttempts.delete(key);
+    return { allowed: true };
+  }
+  return { allowed: true };
+};
+
+const recordFailedAttempt = (key) => {
+  const record = loginAttempts.get(key) || { attempts: 0 };
+  record.attempts += 1;
+  if (record.attempts >= MAX_ATTEMPTS) {
+    record.lockoutUntil = Date.now() + LOCKOUT_MS;
+  }
+  loginAttempts.set(key, record);
+};
+
+const clearAttempts = (key) => {
+  loginAttempts.delete(key);
+};
+
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
-    if (!username || !password) {
+    const rawUsername = req.body.username;
+    const { password } = req.body;
+    if (!rawUsername || !password) {
       return res.status(400).json({ message: 'Please provide both username and password' });
+    }
+
+    const username = String(rawUsername).trim();
+    const clientKey = `${req.ip || 'unknown'}_${username.toLowerCase()}`;
+    const rateLimit = checkRateLimit(clientKey);
+
+    if (!rateLimit.allowed) {
+      return res.status(429).json({ 
+        message: `Too many failed login attempts. Temporarily locked for security. Please try again in ${rateLimit.remainingSec}s.` 
+      });
     }
 
     let user;
@@ -19,22 +62,28 @@ router.post('/login', async (req, res) => {
       user = await User.findOne({ username });
     } else {
       const store = getStore();
-      user = store.users.find(u => u.username === username);
+      user = store.users.find(u => u.username.toLowerCase() === username.toLowerCase());
     }
 
     if (!user) {
+      recordFailedAttempt(clientKey);
       return res.status(401).json({ message: 'Invalid Login ID or Password' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      recordFailedAttempt(clientKey);
       return res.status(401).json({ message: 'Invalid Login ID or Password' });
     }
 
+    // Login successful - clear failed attempts counter
+    clearAttempts(clientKey);
+
+    // 12-hour session lifetime
     const token = jwt.sign(
       { id: user._id, username: user.username, role: user.role || 'admin' },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '12h' }
     );
 
     res.json({
