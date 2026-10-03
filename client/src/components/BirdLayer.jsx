@@ -275,7 +275,6 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
   const idleTweenRef = useRef(null);
   const hoverTimeoutRef = useRef(null);
   const lastPosRef = useRef({ x: 0, y: 0 });
-  const anchorCoordsRef = useRef([]);
 
   // Quick setters for silky 60fps positioning
   const quickX = useRef(null);
@@ -650,11 +649,11 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
 
         // Return to active scroll anchor
         const currentIndex = currentAnchorIndexRef.current || 0;
-        const anchor = anchorCoordsRef.current[currentIndex] || computeAnchorPoint(anchors[currentIndex]);
+        const anchor = getAnchorViewportPos(anchors[currentIndex]);
 
         if (anchor) {
           const returnX = anchor.x;
-          const returnY = anchor.y - window.scrollY;
+          const returnY = anchor.y;
 
           gsap.to(birdEl, {
             x: returnX,
@@ -682,7 +681,7 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       document.removeEventListener('mouseout', handleMouseLeave);
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     };
-  }, [anchors, computeAnchorPoint, startIdleFloat, stopIdleFloat]);
+  }, [anchors, getAnchorViewportPos, startIdleFloat, stopIdleFloat]);
 
   // Small bounce effect when FAQ item opens
   useEffect(() => {
