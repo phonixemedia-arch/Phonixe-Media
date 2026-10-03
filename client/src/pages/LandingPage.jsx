@@ -228,12 +228,6 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <button className="btn btn-gold w-full" onClick={() => { setMobileMenuOpen(false); setIsModalOpen(true); }}>
               Book Strategy Call
             </button>
-            <button 
-              className="btn btn-outline-gold w-full"
-              onClick={() => { setMobileMenuOpen(false); navigateTo('admin-login'); }}
-            >
-              Admin Portal
-            </button>
           </div>
         </div>
       </header>
@@ -961,10 +955,6 @@ _Looking forward to discussing our 360° growth strategy!_`;
               <a href="#privacy" onClick={(e) => { e.preventDefault(); alert('Privacy Policy: All client information and lead data is strictly confidential.'); }}>Privacy Policy</a>
               <span>•</span>
               <a href="#terms" onClick={(e) => { e.preventDefault(); alert('Terms: Services provided according to mutual agreement.'); }}>Terms & Conditions</a>
-              <span>•</span>
-              <button style={{ color: 'var(--gold-light)', fontSize: '0.82rem' }} onClick={() => navigateTo('admin-login')}>
-                Admin Portal Login
-              </button>
             </div>
           </div>
         </div>
