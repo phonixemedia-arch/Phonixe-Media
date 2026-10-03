@@ -2647,17 +2647,4 @@ button {
   will-change: transform, opacity;
 }
 
-/* Accessibility: prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-  .phoenix-bird-wrapper {
-    position: absolute !important;
-    top: 300px !important;
-    right: 15% !important;
-  }
-  .phoenix-embers-canvas,
-  .scroll-progress-line {
-    display: none !important;
-  }
-}
-
 

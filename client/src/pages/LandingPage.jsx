@@ -54,9 +54,6 @@ export default function LandingPage({ navigateTo }) {
 
   // 1. Lenis Smooth Scroll Setup synced with GSAP
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
     const lenis = new Lenis({
       lerp: 0.08,
       smoothWheel: true,
@@ -69,7 +66,8 @@ export default function LandingPage({ navigateTo }) {
     lenis.on('scroll', (e) => {
       ScrollTrigger.update();
       if (typeof window.__phonixeScrollCallback === 'function') {
-        window.__phonixeScrollCallback(e.scroll);
+        const s = typeof e?.scroll === 'number' ? e.scroll : window.scrollY;
+        window.__phonixeScrollCallback(s);
       }
     });
     const tickerCallback = (time) => lenis.raf(time * 1000);
@@ -97,9 +95,6 @@ export default function LandingPage({ navigateTo }) {
 
   // 2. Thin Gold Scroll-Progress Line under Navbar
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
     const progressTrigger = ScrollTrigger.create({
       trigger: '.landing-page-root',
       start: 'top top',
@@ -116,9 +111,6 @@ export default function LandingPage({ navigateTo }) {
 
   // 3. Ambient Glow Parallax (±40px)
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
     const ctx = gsap.context(() => {
       gsap.to('.glow-top', {
         y: -40,

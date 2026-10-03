@@ -391,6 +391,9 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     const birdImg = birdImgRef.current;
     if (!birdEl || !birdImg) return;
 
+    // Ensure valid numerical scroll
+    const scrollVal = (typeof currentScroll === 'number' && !isNaN(currentScroll)) ? currentScroll : window.scrollY;
+
     let list = anchorDataRef.current;
     if (!list || list.length === 0) {
       list = computeMilestones();
@@ -403,7 +406,7 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
 
     // Find which anchor segment corresponds to current scroll
     let i = 0;
-    while (i < list.length - 1 && currentScroll >= list[i + 1].targetScroll) {
+    while (i < list.length - 1 && scrollVal >= list[i + 1].targetScroll) {
       i++;
     }
 
@@ -415,7 +418,7 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     let t = 0;
     if (i < list.length - 1) {
       const range = a2.targetScroll - a1.targetScroll;
-      t = range > 0 ? (currentScroll - a1.targetScroll) / range : 0;
+      t = range > 0 ? (scrollVal - a1.targetScroll) / range : 0;
       t = Math.max(0, Math.min(1, t));
     }
 
@@ -450,8 +453,7 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       // In flight along arched Bézier curve
       flightT = (t - 0.15) / 0.7;
       const midX = (p1Clamped.x + p2Clamped.x) / 2;
-      const arcLift = -Math.min(130, Math.abs(p2Clamped.x - p1Clamped.x) * 0.35 + 40);
-      const midY = Math.min(p1Clamped.y, p2Clamped.y) + arcLift;
+      const midY = Math.max(85, (p1Clamped.y + p2Clamped.y) / 2 - 60);
 
       currentX = (1 - flightT) * (1 - flightT) * p1Clamped.x + 2 * (1 - flightT) * flightT * midX + flightT * flightT * p2Clamped.x;
       currentY = (1 - flightT) * (1 - flightT) * p1Clamped.y + 2 * (1 - flightT) * flightT * midY + flightT * flightT * p2Clamped.y;
@@ -569,8 +571,6 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     const birdImg = birdImgRef.current;
     if (!birdEl || !birdImg) return;
 
-    // Check prefers-reduced-motion
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.innerWidth < 768;
 
     // Quick setters for smooth responsive positioning
@@ -584,10 +584,6 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     computeMilestones();
     updateBirdOnScroll(window.scrollY);
     startIdleFloat();
-
-    if (prefersReducedMotion) {
-      return;
-    }
 
     // SCROLL-DRIVEN FLIGHT LISTENER
     const handleScroll = () => {
@@ -612,7 +608,7 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
 
     // 4-STEP GROWTH SYSTEM DESKTOP PINNING (Pins timeline cleanly for 450px)
     let processPinTrigger = null;
-    if (!isMobile && !prefersReducedMotion) {
+    if (!isMobile) {
       const timelineEl = document.querySelector('.process-timeline');
       const processSteps = document.querySelectorAll('.process-step');
 
@@ -670,8 +666,7 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
   // Add data-bird-hover to any icon element: bird swoops over, perches at ~0.35 scale, gold ring glows
   useEffect(() => {
     const isMobile = window.innerWidth < 768;
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (isMobile || prefersReducedMotion) return;
+    if (isMobile) return;
 
     const birdEl = birdRef.current;
     if (!birdEl) return;
