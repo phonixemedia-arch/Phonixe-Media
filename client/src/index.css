@@ -2594,16 +2594,16 @@ button {
   z-index: 84;
 }
 
-/* Thin Gold Scroll-Progress Line under Navbar */
+/* Thin Gold Scroll-Progress Line at Very Top of Viewport */
 .scroll-progress-line {
   position: fixed;
-  top: 72px; /* Placed seamlessly directly underneath sticky navbar */
+  top: 0;
   left: 0;
   width: 100%;
   height: 2.5px;
   background: linear-gradient(90deg, var(--gold-light), var(--gold-bright), #FFF);
-  box-shadow: 0 0 10px rgba(229, 169, 60, 0.8), 0 0 20px rgba(245, 158, 11, 0.4);
-  z-index: 99;
+  box-shadow: 0 0 8px rgba(229, 169, 60, 0.8), 0 0 16px rgba(245, 158, 11, 0.4);
+  z-index: 1001; /* Sits flush at the absolute top edge of the browser window */
   transform-origin: left center;
   transform: scaleX(0);
   pointer-events: none;
