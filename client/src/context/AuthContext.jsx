@@ -10,7 +10,7 @@ const WARNING_THRESHOLD_SEC = 90; // Show warning modal when 90s remain
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('phonixe_admin_token') || null);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!localStorage.getItem('phonixe_admin_token'));
   const [secondsRemaining, setSecondsRemaining] = useState(INACTIVITY_TIMEOUT_MS / 1000);
   const [showInactivityWarning, setShowInactivityWarning] = useState(false);
 

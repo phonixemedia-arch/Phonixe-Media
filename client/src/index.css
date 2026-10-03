@@ -63,7 +63,7 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto !important;
   font-size: 16px;
   background-color: var(--bg-darkest);
   color: var(--text-main);
@@ -71,6 +71,23 @@ html {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   width: 100%;
+}
+
+/* Lenis Smooth Scrolling Optimization (eliminates native smooth-scroll conflicts & blank screen) */
+html.lenis, html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
 
 body {
@@ -1543,6 +1560,53 @@ button {
 }
 .floating-whatsapp-btn:hover { transform: scale(1.1) rotate(6deg); }
 
+/* Floating Back to Top Button */
+.floating-back-to-top-btn {
+  position: fixed;
+  bottom: 98px;
+  right: 35px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(18, 20, 27, 0.88);
+  border: 1px solid rgba(229, 169, 60, 0.4);
+  color: var(--gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 98;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(229, 169, 60, 0.15);
+  opacity: 0;
+  transform: translateY(16px) scale(0.9);
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.25s ease,
+              border-color 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+.floating-back-to-top-btn.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.floating-back-to-top-btn:hover {
+  background: rgba(30, 33, 46, 0.95);
+  border-color: var(--gold-bright);
+  color: #FFF;
+  transform: translateY(-4px) scale(1.08);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 24px rgba(229, 169, 60, 0.45);
+}
+
+.floating-back-to-top-btn:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
 /* Mobile Sticky Bar */
 .mobile-sticky-bar {
   display: none;
@@ -2373,6 +2437,14 @@ button {
 
   .floating-whatsapp-container {
     display: none;
+  }
+
+  .floating-back-to-top-btn {
+    bottom: 84px;
+    right: 18px;
+    width: 44px;
+    height: 44px;
+    z-index: 99;
   }
 
   .mobile-sticky-bar {

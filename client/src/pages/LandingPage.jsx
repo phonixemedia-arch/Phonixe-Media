@@ -65,8 +65,20 @@ export default function LandingPage({ navigateTo }) {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // 1. Lenis Smooth Scroll Setup synced with GSAP
+  // 1. Lenis Smooth Scroll Setup synced with GSAP & Scroll-to-Top on Refresh
   useEffect(() => {
+    // Force manual scroll restoration so browsers do not restore scroll down the page on refresh
+    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
+    const handleBeforeUnload = () => {
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+
     const lenis = new Lenis({
       lerp: 0.08,
       smoothWheel: true,
@@ -74,6 +86,9 @@ export default function LandingPage({ navigateTo }) {
       touchMultiplier: 1.5
     });
     lenisRef.current = lenis;
+
+    // Immediately clamp Lenis virtual scroll to top
+    lenis.scrollTo(0, { immediate: true });
 
     // Sync Lenis scroll with GSAP ScrollTrigger and BirdLayer
     lenis.on('scroll', (e) => {
@@ -87,16 +102,44 @@ export default function LandingPage({ navigateTo }) {
     gsap.ticker.add(tickerCallback);
     gsap.ticker.lagSmoothing(0);
 
+    // Refresh ScrollTrigger and re-ensure top position after initial render
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      lenis.scrollTo(0, { immediate: true });
+      ScrollTrigger.refresh();
+    });
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handleBeforeUnload);
       gsap.ticker.remove(tickerCallback);
       lenis.destroy();
       lenisRef.current = null;
     };
   }, []);
 
+  // Smooth scroll to top handler
+  const scrollToTop = useCallback(() => {
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, {
+        duration: 1.1,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        onComplete: () => {
+          ScrollTrigger.update();
+        }
+      });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
+
   // Smooth scroll handler for anchor links
   const handleNavClick = (e, targetId) => {
     e.preventDefault();
+    if (targetId === '#hero') {
+      scrollToTop();
+      return;
+    }
     const targetEl = document.querySelector(targetId);
     if (!targetEl) return;
     if (lenisRef.current) {
@@ -2004,6 +2047,19 @@ _Looking forward to discussing our 360° growth strategy!_`;
           </div>
         </div>
       </footer>
+
+      {/* FLOATING BACK TO TOP BUTTON (DESKTOP & MOBILE) */}
+      <button 
+        type="button"
+        className={`floating-back-to-top-btn ${isPastHero ? 'visible' : ''}`}
+        onClick={scrollToTop}
+        aria-label="Back to top"
+        title="Scroll to top"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="18 15 12 9 6 15" />
+        </svg>
+      </button>
 
       {/* FLOATING WHATSAPP BUTTON (DESKTOP) */}
       <aside className="floating-whatsapp-container">
