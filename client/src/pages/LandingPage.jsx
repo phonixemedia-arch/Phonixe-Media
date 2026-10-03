@@ -44,11 +44,11 @@ export default function LandingPage({ navigateTo }) {
   const contactEmail = c.email || 'phonixemedia@gmail.com';
   const igHandle = c.instagramHandle || '@phonixe.media';
   const igUrl = c.instagramUrl || 'https://www.instagram.com/phonixe.media/';
-  const stats = data?.stats || [];
-  const services = data?.services || [];
-  const caseStudies = data?.caseStudies || [];
-  const testimonials = data?.testimonials || [];
-  const faqs = data?.faqs || [];
+  const stats = (data?.stats && data.stats.length > 0) ? data.stats : DEFAULT_LANDING_DATA.stats;
+  const services = (data?.services && data.services.length > 0) ? data.services : DEFAULT_LANDING_DATA.services;
+  const caseStudies = (data?.caseStudies && data.caseStudies.length > 0) ? data.caseStudies : DEFAULT_LANDING_DATA.caseStudies;
+  const testimonials = (data?.testimonials && data.testimonials.length > 0) ? data.testimonials : DEFAULT_LANDING_DATA.testimonials;
+  const faqs = (data?.faqs && data.faqs.length > 0) ? data.faqs : DEFAULT_LANDING_DATA.faqs;
 
   const lenisRef = useRef(null);
   const progressBarRef = useRef(null);
@@ -988,7 +988,8 @@ export default function LandingPage({ navigateTo }) {
         motionCards.forEach(card => {
           if (card.classList.contains('growth-dashboard-mockup') || 
               card.classList.contains('problem-transition-banner') ||
-              card.classList.contains('cta-banner-wrapper')) {
+              card.classList.contains('cta-banner-wrapper') ||
+              card.classList.contains('faq-item')) {
             return;
           }
           const rect = card.getBoundingClientRect();
@@ -1027,7 +1028,7 @@ export default function LandingPage({ navigateTo }) {
     const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!isDesktop || isReduced) return;
 
-    const cards = document.querySelectorAll('.motion-card');
+    const cards = document.querySelectorAll('.motion-card:not(.faq-item)');
     if (!cards.length) return;
 
     const handlers = [];
@@ -1847,7 +1848,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <p className="section-lead">Everything you need to know about working with Phonixe Media and scaling your personal brand.</p>
           </div>
 
-          <div className={`faq-accordion-container reveal ${activeFaq !== null ? 'has-active' : ''}`}>
+          <div className={`faq-accordion-container ${activeFaq !== null ? 'has-active' : ''}`}>
             {faqs.map((f, idx) => {
               const isOpen = activeFaq === idx;
               return (

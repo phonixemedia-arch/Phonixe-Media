@@ -2950,8 +2950,12 @@ button {
 
 /* FAQ Accordion Dim Inactive Siblings */
 .faq-accordion-container.has-active .faq-item:not(.active) {
-  opacity: 0.55;
+  opacity: 0.55 !important;
   transition: opacity 0.35s ease;
+}
+
+.faq-accordion-container .faq-item.active {
+  opacity: 1 !important;
 }
 
 /* Final CTA Soft Ember Glow */
