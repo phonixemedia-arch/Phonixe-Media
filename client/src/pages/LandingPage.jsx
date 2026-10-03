@@ -512,6 +512,584 @@ export default function LandingPage({ navigateTo }) {
     };
   }, [data]);
 
+  // 7. Container (Card) Scroll-Animation System (.motion-card) across 12 Sections
+  useEffect(() => {
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (isReduced) {
+      document.querySelectorAll('.motion-card').forEach(el => {
+        el.classList.add('is-revealed');
+        gsap.set(el, { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0, clearProps: 'transform,opacity' });
+      });
+      return;
+    }
+
+    const isMobile = window.innerWidth < 768;
+
+    const ctx = gsap.context(() => {
+      if (isMobile) {
+        // Mobile: Simple fade-up with no tilt or parallax
+        const allMotionCards = gsap.utils.toArray('.motion-card');
+        allMotionCards.forEach((card) => {
+          gsap.fromTo(card,
+            { y: 25, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.65,
+              ease: 'power3.out',
+              scrollTrigger: {
+                trigger: card,
+                start: 'top 85%',
+                once: true,
+                onEnter: () => card.classList.add('is-revealed')
+              }
+            }
+          );
+        });
+        return;
+      }
+
+      // Desktop Choreography:
+      // 1. Hero Dashboard Mockup (data-motion="scale")
+      const heroMockup = document.querySelector('.growth-dashboard-mockup.motion-card');
+      if (heroMockup) {
+        gsap.fromTo(heroMockup,
+          { scale: 0.94, opacity: 0, y: 25 },
+          {
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            duration: 0.85,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: heroMockup,
+              start: 'top 88%',
+              once: true,
+              onEnter: () => heroMockup.classList.add('is-revealed')
+            }
+          }
+        );
+      }
+
+      // 2. Measurable Impact (4 Stat Cards, data-motion="rise")
+      const statCards = gsap.utils.toArray('.stats-grid .motion-card');
+      if (statCards.length) {
+        gsap.fromTo(statCards,
+          { y: 40, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.75,
+            ease: 'power3.out',
+            stagger: 0.09,
+            scrollTrigger: {
+              trigger: '.stats-grid',
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                statCards.forEach((card, i) => {
+                  setTimeout(() => {
+                    card.classList.add('is-revealed');
+                    card.querySelector('.stat-icon-wrapper')?.classList.add('icon-pop');
+                  }, i * 90);
+                });
+              }
+            }
+          }
+        );
+      }
+
+      // 3. Who We Serve (6 Niche Cards, data-motion="fan")
+      const nicheCards = gsap.utils.toArray('.niche-cards-grid .motion-card');
+      if (nicheCards.length) {
+        nicheCards.forEach((card, idx) => {
+          const col = idx % 3;
+          let initX = 0;
+          let initRot = 0;
+          if (col === 0) { initX = -32; initRot = -2; }
+          else if (col === 2) { initX = 32; initRot = 2; }
+
+          gsap.fromTo(card,
+            { x: initX, y: 35, opacity: 0, rotation: initRot, scale: 0.97 },
+            {
+              x: 0,
+              y: 0,
+              opacity: 1,
+              rotation: 0,
+              scale: 1,
+              duration: 0.8,
+              ease: 'power3.out',
+              delay: (idx % 3) * 0.09 + Math.floor(idx / 3) * 0.12,
+              scrollTrigger: {
+                trigger: '.niche-cards-grid',
+                start: 'top 85%',
+                once: true,
+                onEnter: () => {
+                  setTimeout(() => {
+                    card.classList.add('is-revealed');
+                    const tags = card.querySelectorAll('.niche-focus-tags span');
+                    tags.forEach((tag, ti) => {
+                      tag.style.opacity = '0';
+                      tag.style.transform = 'scale(0.8)';
+                      setTimeout(() => {
+                        tag.style.transition = 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+                        tag.style.opacity = '1';
+                        tag.style.transform = 'scale(1)';
+                      }, ti * 60 + 100);
+                    });
+                  }, idx * 80);
+                }
+              }
+            }
+          );
+        });
+      }
+
+      // 4. Harsh Reality (6 Problem Cards, data-motion="tilt")
+      const problemCards = gsap.utils.toArray('.problems-grid .motion-card');
+      if (problemCards.length) {
+        gsap.fromTo(problemCards,
+          { y: 35, opacity: 0, rotateX: 6, rotateY: -6, transformPerspective: 800 },
+          {
+            y: 0,
+            opacity: 1,
+            rotateX: 0,
+            rotateY: 0,
+            duration: 0.8,
+            ease: 'power3.out',
+            stagger: 0.08,
+            scrollTrigger: {
+              trigger: '.problems-grid',
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                problemCards.forEach((card, i) => {
+                  setTimeout(() => {
+                    card.classList.add('is-revealed');
+                    card.querySelector('.problem-icon')?.classList.add('icon-shake');
+                  }, i * 80 + 300);
+                });
+              }
+            }
+          }
+        );
+      }
+
+      // 5. Rescue Banner & 2-3 Hours Guarantee Box (data-motion="scale")
+      const rescueBanner = document.querySelector('.problem-transition-banner.motion-card');
+      if (rescueBanner) {
+        gsap.fromTo(rescueBanner,
+          { scale: 0.96, opacity: 0, y: 25 },
+          {
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: rescueBanner,
+              start: 'top 85%',
+              once: true,
+              onEnter: () => rescueBanner.classList.add('is-revealed')
+            }
+          }
+        );
+      }
+
+      const guaranteeBox = document.querySelector('.process-guarantee-box.motion-card');
+      if (guaranteeBox) {
+        gsap.fromTo(guaranteeBox,
+          { scale: 0.96, opacity: 0, y: 25 },
+          {
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: guaranteeBox,
+              start: 'top 85%',
+              once: true,
+              onEnter: () => guaranteeBox.classList.add('is-revealed')
+            }
+          }
+        );
+      }
+
+      // 6. Services Suite (4 Cards, data-motion="rise")
+      const serviceCards = gsap.utils.toArray('.services-grid .motion-card');
+      if (serviceCards.length) {
+        gsap.fromTo(serviceCards,
+          { y: 40, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: 'power3.out',
+            stagger: 0.1,
+            scrollTrigger: {
+              trigger: '.services-grid',
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                serviceCards.forEach((card, i) => {
+                  setTimeout(() => {
+                    card.classList.add('is-revealed');
+                    const features = card.querySelectorAll('.service-features li');
+                    gsap.fromTo(features,
+                      { opacity: 0, x: -8 },
+                      { opacity: 1, x: 0, duration: 0.45, ease: 'power2.out', stagger: 0.05 }
+                    );
+                  }, i * 100);
+                });
+              }
+            }
+          }
+        );
+      }
+
+      // 7. 4-Step Growth System (Cards, data-motion="rise")
+      const stepCards = gsap.utils.toArray('.process-timeline .motion-card');
+      if (stepCards.length) {
+        gsap.fromTo(stepCards,
+          { y: 35, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.75,
+            ease: 'power3.out',
+            stagger: 0.1,
+            scrollTrigger: {
+              trigger: '.process-timeline',
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                stepCards.forEach((card, i) => {
+                  setTimeout(() => card.classList.add('is-revealed'), i * 100);
+                });
+              }
+            }
+          }
+        );
+      }
+
+      // 8. Proven Results (3 Case Cards, data-motion="scale")
+      const caseCards = gsap.utils.toArray('.case-studies-grid .motion-card');
+      if (caseCards.length) {
+        caseCards.forEach((card, idx) => {
+          const isMiddle = idx === 1;
+          gsap.fromTo(card,
+            { y: 35, opacity: 0, scale: isMiddle ? 0.98 : 0.95 },
+            {
+              y: 0,
+              opacity: 1,
+              scale: isMiddle ? 1.025 : 1,
+              duration: 0.85,
+              ease: 'power3.out',
+              delay: idx * 0.12,
+              scrollTrigger: {
+                trigger: '.case-studies-grid',
+                start: 'top 85%',
+                once: true,
+                onEnter: () => {
+                  setTimeout(() => card.classList.add('is-revealed'), idx * 120);
+                }
+              }
+            }
+          );
+        });
+      }
+
+      // 9. Testimonials (3 Cards, data-motion="rise")
+      const testimonialCards = gsap.utils.toArray('.testimonials-grid .motion-card');
+      if (testimonialCards.length) {
+        gsap.fromTo(testimonialCards,
+          { y: 40, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: 'power3.out',
+            stagger: 0.12,
+            scrollTrigger: {
+              trigger: '.testimonials-grid',
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                testimonialCards.forEach((card, i) => {
+                  setTimeout(() => {
+                    card.classList.add('is-revealed');
+                    card.querySelector('.placeholder-avatar')?.classList.add('avatar-rotated');
+                    const stars = card.querySelectorAll('.stars-row .star-char');
+                    stars.forEach((s, si) => {
+                      setTimeout(() => s.classList.add('star-pop'), si * 75);
+                    });
+                  }, i * 120);
+                });
+              }
+            }
+          }
+        );
+      }
+
+      // 10. Phonixe Difference (Why Us Highlight & 7 Points, data-motion="slide-right")
+      const whyHighlight = document.querySelector('.why-brand-highlight.motion-card');
+      if (whyHighlight) {
+        gsap.fromTo(whyHighlight,
+          { scale: 0.95, opacity: 0, y: 20 },
+          {
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            duration: 0.75,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: whyHighlight,
+              start: 'top 85%',
+              once: true,
+              onEnter: () => whyHighlight.classList.add('is-revealed')
+            }
+          }
+        );
+      }
+
+      const whyPoints = gsap.utils.toArray('.why-us-points .motion-card');
+      if (whyPoints.length) {
+        gsap.fromTo(whyPoints,
+          { x: 45, opacity: 0 },
+          {
+            x: 0,
+            opacity: 1,
+            duration: 0.7,
+            ease: 'power3.out',
+            stagger: 0.08,
+            scrollTrigger: {
+              trigger: '.why-us-points',
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                whyPoints.forEach((point, i) => {
+                  setTimeout(() => {
+                    point.classList.add('is-revealed');
+                    point.querySelector('.why-point-icon')?.classList.add('icon-tick');
+                  }, i * 80);
+                });
+              }
+            }
+          }
+        );
+      }
+
+      // 11. FAQ Accordion (8 Items, data-motion="rise")
+      const faqCards = gsap.utils.toArray('.faq-accordion-container .motion-card');
+      if (faqCards.length) {
+        gsap.fromTo(faqCards,
+          { y: 30, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.65,
+            ease: 'power3.out',
+            stagger: 0.07,
+            scrollTrigger: {
+              trigger: '.faq-accordion-container',
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                faqCards.forEach((f, i) => {
+                  setTimeout(() => f.classList.add('is-revealed'), i * 70);
+                });
+              }
+            }
+          }
+        );
+      }
+
+      // 12. Final CTA Banner (data-motion="scale")
+      const ctaBanner = document.querySelector('.cta-banner-wrapper.motion-card');
+      if (ctaBanner) {
+        const ctaButtons = ctaBanner.querySelectorAll('.cta-buttons-row .btn, .cta-buttons-row a');
+        gsap.fromTo(ctaBanner,
+          { scale: 0.95, opacity: 0, y: 30 },
+          {
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            duration: 0.85,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: ctaBanner,
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                ctaBanner.classList.add('is-revealed');
+                ctaBanner.classList.add('has-ember-glow');
+                if (ctaButtons.length) {
+                  gsap.fromTo(ctaButtons,
+                    { opacity: 0, y: 15 },
+                    { opacity: 1, y: 0, duration: 0.5, stagger: 0.12, ease: 'power2.out' }
+                  );
+                }
+              }
+            }
+          }
+        );
+      }
+    });
+
+    return () => ctx.revert();
+  }, [data]);
+
+  // 8. Desktop Scroll-Linked Row Depth & Viewport-Center Focus
+  useEffect(() => {
+    const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches && window.innerWidth >= 768;
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!isDesktop || isReduced) return;
+
+    const ctx = gsap.context(() => {
+      const gridSelectors = [
+        '.stats-grid .motion-card',
+        '.niche-cards-grid .motion-card',
+        '.problems-grid .motion-card',
+        '.services-grid .motion-card',
+        '.testimonials-grid .motion-card'
+      ];
+
+      gridSelectors.forEach(selector => {
+        const items = gsap.utils.toArray(selector);
+        if (!items.length) return;
+        items.forEach((item, idx) => {
+          const drift = idx % 2 === 0 ? -12 : 12;
+          gsap.to(item, {
+            y: drift,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: item,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.5
+            }
+          });
+        });
+      });
+    });
+
+    // Viewport-Center Card Focus
+    let ticking = false;
+    const updateCenterFocus = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const motionCards = document.querySelectorAll('.motion-card');
+        const centerY = window.innerHeight / 2;
+        let closestCard = null;
+        let closestDist = Infinity;
+
+        motionCards.forEach(card => {
+          if (card.classList.contains('growth-dashboard-mockup') || 
+              card.classList.contains('problem-transition-banner') ||
+              card.classList.contains('cta-banner-wrapper')) {
+            return;
+          }
+          const rect = card.getBoundingClientRect();
+          if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+          const cardCenter = rect.top + rect.height / 2;
+          const dist = Math.abs(cardCenter - centerY);
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestCard = card;
+          }
+        });
+
+        motionCards.forEach(card => {
+          if (card === closestCard && closestDist < 160) {
+            card.classList.add('card-center-focus');
+          } else {
+            card.classList.remove('card-center-focus');
+          }
+        });
+        ticking = false;
+      });
+    };
+
+    window.addEventListener('scroll', updateCenterFocus, { passive: true });
+    updateCenterFocus();
+
+    return () => {
+      ctx.revert();
+      window.removeEventListener('scroll', updateCenterFocus);
+    };
+  }, [data]);
+
+  // 9. Desktop-Only 3D Tilt Hover (max 4° tilt + 6px lift)
+  useEffect(() => {
+    const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches && window.innerWidth >= 768;
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!isDesktop || isReduced) return;
+
+    const cards = document.querySelectorAll('.motion-card');
+    if (!cards.length) return;
+
+    const handlers = [];
+
+    cards.forEach((card) => {
+      const onMouseMove = (e) => {
+        const rect = card.getBoundingClientRect();
+        const xNorm = (e.clientX - rect.left) / rect.width - 0.5;
+        const yNorm = (e.clientY - rect.top) / rect.height - 0.5;
+
+        const tiltX = yNorm * -7; // max ~3.5 deg
+        const tiltY = xNorm * 7;
+
+        gsap.to(card, {
+          rotateX: tiltX,
+          rotateY: tiltY,
+          y: -6,
+          transformPerspective: 1000,
+          duration: 0.35,
+          ease: 'power2.out',
+          overwrite: 'auto'
+        });
+      };
+
+      const onMouseLeave = () => {
+        gsap.to(card, {
+          rotateX: 0,
+          rotateY: 0,
+          y: 0,
+          duration: 0.55,
+          ease: 'power2.out',
+          overwrite: 'auto'
+        });
+      };
+
+      card.addEventListener('mousemove', onMouseMove, { passive: true });
+      card.addEventListener('mouseleave', onMouseLeave, { passive: true });
+      handlers.push({ card, onMouseMove, onMouseLeave });
+    });
+
+    return () => {
+      handlers.forEach(({ card, onMouseMove, onMouseLeave }) => {
+        card.removeEventListener('mousemove', onMouseMove);
+        card.removeEventListener('mouseleave', onMouseLeave);
+        gsap.set(card, { rotateX: 0, rotateY: 0, y: 0 });
+      });
+    };
+  }, [data]);
+
+  // 10. ScrollTrigger.refresh() on fonts ready and window load
+  useEffect(() => {
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        ScrollTrigger.refresh();
+      });
+    }
+    const onWinLoad = () => ScrollTrigger.refresh();
+    window.addEventListener('load', onWinLoad);
+
+    return () => window.removeEventListener('load', onWinLoad);
+  }, []);
+
   // Handle Form Submit
   const handleSubmitLead = async (e) => {
     e.preventDefault();
@@ -703,7 +1281,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
           </div>
 
           <div className="hero-visual">
-            <div className="growth-dashboard-mockup glass-card card-spotlight">
+            <div className="growth-dashboard-mockup glass-card card-spotlight motion-card" data-motion="scale">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="mockup-header">
                 <div className="user-profile-badge">
                   <div className="profile-pic-container" data-bird-hover>
@@ -792,7 +1371,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
 
           <div className="stats-grid">
             {stats.map((st, idx) => (
-              <div className="stat-card glass-card reveal" key={st._id || idx}>
+              <div className="stat-card glass-card reveal motion-card card-spotlight" data-motion="rise" key={st._id || idx}>
+                <div className="card-light-sweep" aria-hidden="true" />
                 <div className="stat-icon-wrapper" data-bird-hover>✦</div>
                 <div className="stat-number-row">
                   <span>{st.number}</span>
@@ -816,7 +1396,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
           </div>
 
           <div className="niche-cards-grid">
-            <div className="niche-card glass-card reveal">
+            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="niche-card-icon" data-bird-hover>🔮</div>
               <h3>Tarot Readers & Intuitives</h3>
               <p>Convert general curiosity into deeply engaged 1-on-1 private reading clients through high-trust card explanation reels, predictive insights, and ethical boundaries.</p>
@@ -827,7 +1408,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </div>
             </div>
 
-            <div className="niche-card glass-card reveal">
+            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="niche-card-icon" data-bird-hover>🔢</div>
               <h3>Numerologists & Astro Mentors</h3>
               <p>Break down complex birth date matrixes, destiny numbers, and master numbers into digestible visual carousels and relatable reels that evoke instant realization.</p>
@@ -838,7 +1420,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </div>
             </div>
 
-            <div className="niche-card glass-card reveal">
+            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="niche-card-icon" data-bird-hover>🏛️</div>
               <h3>Vastu & Energy Experts</h3>
               <p>Showcase real property transformations, architectural energy remedies, and actionable lifestyle adjustments that position you as the definitive high-ticket consultant.</p>
@@ -849,7 +1432,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </div>
             </div>
 
-            <div className="niche-card glass-card reveal">
+            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="niche-card-icon" data-bird-hover>💫</div>
               <h3>Akashic Record Readers & Healers</h3>
               <p>Demystify soul history, karmic blockages, and ancestral trauma with profound storytelling frameworks that make prospective seekers feel seen, understood, and guided.</p>
@@ -860,7 +1444,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </div>
             </div>
 
-            <div className="niche-card glass-card reveal">
+            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="niche-card-icon" data-bird-hover>🤝</div>
               <h3>Relationship & Marriage Mentors</h3>
               <p>Address painful communication breakdowns, attachment triggers, and partnership healing with empathetic video scripts that build immediate emotional safety.</p>
@@ -871,7 +1456,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </div>
             </div>
 
-            <div className="niche-card glass-card reveal">
+            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="niche-card-icon" data-bird-hover>🌿</div>
               <h3>Spiritual, Life & Wellness Mentors</h3>
               <p>Establish sovereign personal authority, articulate your signature methodology, and attract dream coaching clients who value spiritual depth over superficial hacks.</p>
@@ -895,39 +1481,46 @@ _Looking forward to discussing our 360° growth strategy!_`;
           </div>
 
           <div className="problems-grid">
-            <div className="problem-card glass-card reveal">
+            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="problem-icon" data-bird-hover>❌</div>
               <h3>Random Content Without A Strategy</h3>
               <p>Waking up wondering "what should I record today?" resulting in disjointed topics that confuse the algorithm and leave your audience unclear about what you actually offer.</p>
             </div>
-            <div className="problem-card glass-card reveal">
+            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="problem-icon" data-bird-hover>❌</div>
               <h3>Low Engagement Despite Daily Effort</h3>
               <p>Spending 3 hours filming and editing a video only to see 150 views and 10 likes from close friends. It feels disheartening and completely unsustainable.</p>
             </div>
-            <div className="problem-card glass-card reveal">
+            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="problem-icon" data-bird-hover>❌</div>
               <h3>No Clear Personal Brand Positioning</h3>
               <p>Blending in with thousands of other coaches. Without sharp visual identity, signature frameworks, and distinct voice, visitors scroll right past your profile.</p>
             </div>
-            <div className="problem-card glass-card reveal">
+            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="problem-icon" data-bird-hover>❌</div>
               <h3>Views That Never Turn Into Inquiries</h3>
               <p>A reel hits 50,000 views, yet your calendar has zero consultations booked. Vanity attention without an intentional conversion bridge does not pay your bills.</p>
             </div>
-            <div className="problem-card glass-card reveal">
+            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="problem-icon" data-bird-hover>❌</div>
               <h3>Creative Burnout & Lack Of Consistency</h3>
               <p>Juggling client consultations, life, and content production alone leads to constant stop-and-start cycles that reset your social media momentum every month.</p>
             </div>
-            <div className="problem-card glass-card reveal">
+            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="problem-icon" data-bird-hover>❌</div>
               <h3>No Predictable Content & Shooting System</h3>
               <p>Uncertainty around lighting, camera confidence, vocal inflection, scripting hooks, and video aesthetics keeps you feeling amateur instead of industry-leading.</p>
             </div>
           </div>
 
-          <div className="problem-transition-banner glass-card reveal">
+          <div className="problem-transition-banner glass-card reveal motion-card card-spotlight" data-motion="scale">
+            <div className="card-light-sweep" aria-hidden="true" />
             <img src="/assets/logo-horizontal.png" alt="Phonixe Media" className="transition-logo" />
             <div style={{ flex: 1 }}>
               <h3 style={{ fontSize: '1.45rem', marginBottom: '14px', lineHeight: 1.35, color: 'var(--gold-bright)' }}>
@@ -955,7 +1548,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
 
           <div className="services-grid">
             {services.map((srv, idx) => (
-              <div className="service-card glass-card reveal" key={srv._id || idx}>
+              <div className="service-card glass-card reveal motion-card card-spotlight" data-motion="rise" key={srv._id || idx}>
+                <div className="card-light-sweep" aria-hidden="true" />
                 <div className="service-badge">{srv.badge}</div>
                 <div className="service-icon-box" data-bird-hover>✦</div>
                 <h3 className="service-title">{srv.title}</h3>
@@ -992,7 +1586,13 @@ _Looking forward to discussing our 360° growth strategy!_`;
           </div>
 
           <div className="process-timeline">
-            <div className="process-step glass-card reveal">
+            {/* Scrubbed Connector Line */}
+            <div className="process-connector-track" aria-hidden="true">
+              <div className="process-connector-fill" />
+            </div>
+
+            <div className="process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="step-number-badge" data-bird-hover>01</div>
               <span className="step-tag">Phase 1 • Assessment</span>
               <h3>Discover</h3>
@@ -1006,7 +1606,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </div>
             </div>
 
-            <div className="process-step glass-card reveal">
+            <div className="process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="step-number-badge" data-bird-hover>02</div>
               <span className="step-tag">Phase 2 • Architecture</span>
               <h3>Strategize</h3>
@@ -1020,7 +1621,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </div>
             </div>
 
-            <div className="process-step glass-card reveal">
+            <div className="process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="step-number-badge" data-bird-hover>03</div>
               <span className="step-tag">Phase 3 • Execution</span>
               <h3>Create</h3>
@@ -1034,7 +1636,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </div>
             </div>
 
-            <div className="process-step glass-card reveal">
+            <div className="process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
+              <div className="card-light-sweep" aria-hidden="true" />
               <div className="step-number-badge" data-bird-hover>04</div>
               <span className="step-tag">Phase 4 • Scale</span>
               <h3>Optimize</h3>
@@ -1049,7 +1652,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
           </div>
 
-          <div className="process-guarantee-box glass-card text-center reveal">
+          <div className="process-guarantee-box glass-card text-center reveal motion-card card-spotlight" data-motion="scale">
+            <div className="card-light-sweep" aria-hidden="true" />
             <div className="guarantee-icon" data-bird-hover>⚡</div>
             <h4>Spend Just 2–3 Hours Per Month Recording. We Handle The Rest.</h4>
             <p>No more staring at video editing timelines or wrestling with captions at midnight.</p>
@@ -1071,7 +1675,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
 
           <div className="case-studies-grid">
             {caseStudies.map((cs, idx) => (
-              <div className="case-card glass-card reveal" key={cs._id || idx}>
+              <div className={`case-card glass-card reveal motion-card card-spotlight ${idx === 1 ? 'case-card-highlight' : ''}`} data-motion="scale" key={cs._id || idx}>
+                <div className="card-light-sweep" aria-hidden="true" />
                 <div className="case-top-bar">
                   <span className="case-niche-tag">{cs.niche}</span>
                 </div>
@@ -1131,8 +1736,13 @@ _Looking forward to discussing our 360° growth strategy!_`;
 
           <div className="testimonials-grid">
             {testimonials.map((t, idx) => (
-              <div className="testimonial-card glass-card reveal" key={t._id || idx}>
-                <div className="stars-row">{'★'.repeat(t.stars || 5)}</div>
+              <div className="testimonial-card glass-card reveal motion-card card-spotlight" data-motion="rise" key={t._id || idx}>
+                <div className="card-light-sweep" aria-hidden="true" />
+                <div className="stars-row">
+                  {Array.from({ length: t.stars || 5 }).map((_, si) => (
+                    <span key={si} className="star-char">★</span>
+                  ))}
+                </div>
                 <p className="testimonial-quote">"{t.quote}"</p>
                 <div className="testimonial-author">
                   <div className="placeholder-avatar" data-bird-hover>{t.avatarEmoji || '✨'}</div>
@@ -1158,7 +1768,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
                 Most agencies give you cookie-cutter templates, random dance trends, and vanity metrics that don't convert into paid consultations. We build an enduring personal brand ecosystem.
               </p>
 
-              <div className="why-brand-highlight glass-card">
+              <div className="why-brand-highlight glass-card motion-card card-spotlight" data-motion="scale">
+                <div className="card-light-sweep" aria-hidden="true" />
                 <img src="/assets/phoenix-badge.png" alt="Phonixe Logo Badge" className="why-logo-img" data-bird-hover />
                 <div className="why-brand-quote">
                   <strong>Born From Rising High:</strong> Like the mythical Phoenix, we take your hidden expertise and elevate it into a radiant authority that commands attention and converts into revenue.
@@ -1171,49 +1782,56 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="why-us-points reveal">
-              <div className="why-point-item glass-card">
+              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
+                <div className="card-light-sweep" aria-hidden="true" />
                 <div className="why-point-icon" data-bird-hover>01</div>
                 <div>
                   <h4>Strategy Before Posting</h4>
                   <p>We never post blindly. Every single piece of content has a precise purpose: to attract, educate, build deep trust, or prompt a discovery call.</p>
                 </div>
               </div>
-              <div className="why-point-item glass-card">
+              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
+                <div className="card-light-sweep" aria-hidden="true" />
                 <div className="why-point-icon" data-bird-hover>02</div>
                 <div>
                   <h4>Content Built Around Business Goals</h4>
                   <p>We don't chase useless viral trends. We target decision-makers and seekers who have the desire and budget to invest in your coaching.</p>
                 </div>
               </div>
-              <div className="why-point-item glass-card">
+              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
+                <div className="card-light-sweep" aria-hidden="true" />
                 <div className="why-point-icon" data-bird-hover>03</div>
                 <div>
                   <h4>Strong Focus On Authentic Personal Branding</h4>
                   <p>We extract your natural charisma, personal story, and unique worldview so that you build loyal clients, not just passive viewers.</p>
                 </div>
               </div>
-              <div className="why-point-item glass-card">
+              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
+                <div className="card-light-sweep" aria-hidden="true" />
                 <div className="why-point-icon" data-bird-hover>04</div>
                 <div>
                   <h4>Consistent & Proactive Communication</h4>
                   <p>No disappearing contacts. You get direct WhatsApp access, dedicated account managers, and scheduled weekly updates.</p>
                 </div>
               </div>
-              <div className="why-point-item glass-card">
+              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
+                <div className="card-light-sweep" aria-hidden="true" />
                 <div className="why-point-icon" data-bird-hover>05</div>
                 <div>
                   <h4>Data-Driven Optimization</h4>
                   <p>We review retention graphs, hook drop-off rates, and lead metrics weekly, constantly calibrating the strategy to maximize your ROI.</p>
                 </div>
               </div>
-              <div className="why-point-item glass-card">
+              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
+                <div className="card-light-sweep" aria-hidden="true" />
                 <div className="why-point-icon" data-bird-hover>06</div>
                 <div>
                   <h4>Customized Content Systems for Coaches</h4>
                   <p>From Vastu remedies to Tarot spreads and spiritual awakenings, we understand your niche deeply and write scripts that sound authentic to your craft.</p>
                 </div>
               </div>
-              <div className="why-point-item glass-card">
+              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
+                <div className="card-light-sweep" aria-hidden="true" />
                 <div className="why-point-icon" data-bird-hover>07</div>
                 <div>
                   <h4>Focus On Both Attention AND Conversion</h4>
@@ -1234,12 +1852,21 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <p className="section-lead">Everything you need to know about working with Phonixe Media and scaling your personal brand.</p>
           </div>
 
-          <div className="faq-accordion-container reveal">
+          <div className={`faq-accordion-container reveal ${activeFaq !== null ? 'has-active' : ''}`}>
             {faqs.map((f, idx) => {
               const isOpen = activeFaq === idx;
               return (
-                <div className={`faq-item glass-card ${isOpen ? 'active' : ''}`} key={f._id || idx}>
-                  <button className="faq-question" onClick={() => setActiveFaq(isOpen ? null : idx)}>
+                <div className={`faq-item glass-card motion-card card-spotlight ${isOpen ? 'active' : ''}`} data-motion="rise" key={f._id || idx}>
+                  <div className="card-light-sweep" aria-hidden="true" />
+                  <button 
+                    className="faq-question" 
+                    onClick={() => {
+                      setActiveFaq(isOpen ? null : idx);
+                      setTimeout(() => {
+                        ScrollTrigger.refresh();
+                      }, 350);
+                    }}
+                  >
                     <span>{idx + 1}. {f.question}</span>
                     <span className="faq-toggle-icon" data-bird-hover>+</span>
                   </button>
@@ -1256,7 +1883,8 @@ _Looking forward to discussing our 360° growth strategy!_`;
       {/* FINAL CTA SECTION */}
       <section className="final-cta-section" id="cta">
         <div className="container">
-          <div className="cta-banner-wrapper glass-card reveal text-center">
+          <div className="cta-banner-wrapper glass-card reveal text-center motion-card card-spotlight" data-motion="scale">
+            <div className="card-light-sweep" aria-hidden="true" />
             <img src="/assets/logo-horizontal.png" alt="Phonixe Media Brand Logo" className="cta-center-logo" />
             <div className="cta-heading-container">
               <h2 className="cta-main-headline">

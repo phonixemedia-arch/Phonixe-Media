@@ -709,6 +709,11 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
                 step.classList.remove('bird-perched-glow');
               }
             });
+
+            const connectorFill = document.querySelector('.process-connector-fill');
+            if (connectorFill) {
+              connectorFill.style.transform = `scaleX(${self.progress})`;
+            }
           }
         });
       }
