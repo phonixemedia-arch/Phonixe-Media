@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Lenis from 'lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import BirdLayer from '../components/BirdLayer';
 import { api } from '../services/api';
 import { DEFAULT_LANDING_DATA } from '../data/defaultData';
+
+gsap.registerPlugin(ScrollTrigger);
 
 // Helper to cleanly parse and separate metric values and titles without text overlapping
 const parseMetric = (str, fallbackTitle) => {
@@ -31,6 +37,10 @@ export default function LandingPage({ navigateTo }) {
   const [activeFaq, setActiveFaq] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const lenisRef = useRef(null);
+  const progressBarRef = useRef(null);
+  const chartPathRef = useRef(null);
+
   // Form State
   const [formState, setFormState] = useState({
     name: '',
@@ -41,6 +51,167 @@ export default function LandingPage({ navigateTo }) {
     message: ''
   });
   const [submitting, setSubmitting] = useState(false);
+
+  // 1. Lenis Smooth Scroll Setup synced with GSAP
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const lenis = new Lenis({
+      lerp: 0.08,
+      smoothWheel: true,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.5
+    });
+    lenisRef.current = lenis;
+
+    // Sync Lenis scroll with GSAP ScrollTrigger
+    lenis.on('scroll', ScrollTrigger.update);
+    const tickerCallback = (time) => lenis.raf(time * 1000);
+    gsap.ticker.add(tickerCallback);
+    gsap.ticker.lagSmoothing(0);
+
+    return () => {
+      gsap.ticker.remove(tickerCallback);
+      lenis.destroy();
+      lenisRef.current = null;
+    };
+  }, []);
+
+  // Smooth scroll handler for anchor links
+  const handleNavClick = (e, targetId) => {
+    e.preventDefault();
+    const targetEl = document.querySelector(targetId);
+    if (!targetEl) return;
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(targetEl, { offset: -70 });
+    } else {
+      targetEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // 2. Thin Gold Scroll-Progress Line under Navbar
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const progressTrigger = ScrollTrigger.create({
+      trigger: '.landing-page-root',
+      start: 'top top',
+      end: 'bottom bottom',
+      onUpdate: (self) => {
+        if (progressBarRef.current) {
+          gsap.set(progressBarRef.current, { scaleX: self.progress });
+        }
+      }
+    });
+
+    return () => progressTrigger.kill();
+  }, []);
+
+  // 3. Ambient Glow Parallax (±40px)
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const ctx = gsap.context(() => {
+      gsap.to('.glow-top', {
+        y: -40,
+        scrollTrigger: {
+          trigger: '.landing-page-root',
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 1.5
+        }
+      });
+      gsap.to('.glow-middle', {
+        y: 40,
+        scrollTrigger: {
+          trigger: '.landing-page-root',
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 2
+        }
+      });
+      gsap.to('.glow-bottom', {
+        y: -35,
+        scrollTrigger: {
+          trigger: '.landing-page-root',
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 1.5
+        }
+      });
+    });
+
+    return () => ctx.revert();
+  }, []);
+
+  // 4. Cinematic Line-by-Line Reveals and Card Staggers
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const ctx = gsap.context(() => {
+      // Stagger section header elements
+      gsap.utils.toArray('.section-header').forEach((header) => {
+        gsap.from(header.children, {
+          y: 28,
+          opacity: 0,
+          stagger: 0.1,
+          duration: 0.85,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: header,
+            start: 'top 85%',
+            toggleActions: 'play none none none'
+          }
+        });
+      });
+
+      // Card Grid Staggers (0.08s)
+      const cardGrids = [
+        { grid: '.stats-grid', cards: '.stat-card' },
+        { grid: '.niche-cards-grid', cards: '.niche-card' },
+        { grid: '.problems-grid', cards: '.problem-card' },
+        { grid: '.services-grid', cards: '.service-card' },
+        { grid: '.case-studies-grid', cards: '.case-card' },
+        { grid: '.testimonials-grid', cards: '.testimonial-card' },
+        { grid: '.why-us-points', cards: '.why-point-item' }
+      ];
+
+      cardGrids.forEach(({ grid, cards }) => {
+        const gridEl = document.querySelector(grid);
+        if (gridEl) {
+          gsap.from(cards, {
+            y: 30,
+            opacity: 0,
+            duration: 0.75,
+            stagger: 0.08,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: grid,
+              start: 'top 82%',
+              toggleActions: 'play none none none'
+            }
+          });
+        }
+      });
+    });
+
+    return () => ctx.revert();
+  }, [data]);
+
+  // 5. Hero Chart Path Draw Animation
+  useEffect(() => {
+    if (chartPathRef.current) {
+      setTimeout(() => {
+        if (chartPathRef.current) {
+          chartPathRef.current.style.strokeDashoffset = '0';
+        }
+      }, 500);
+    }
+  }, []);
 
   // Load Content from Backend API
   useEffect(() => {
@@ -65,35 +236,6 @@ export default function LandingPage({ navigateTo }) {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  // Scroll Reveal Animations
-  useEffect(() => {
-    const revealEls = document.querySelectorAll('.reveal');
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries, obs) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('active');
-            obs.unobserve(entry.target);
-          }
-        });
-      }, { rootMargin: '50px 0px 50px 0px', threshold: 0.05 });
-
-      revealEls.forEach(el => observer.observe(el));
-
-      // Auto-reveal fallback: ensures all elements become active gracefully
-      const timer = setTimeout(() => {
-        revealEls.forEach(el => el.classList.add('active'));
-      }, 1000);
-
-      return () => {
-        observer.disconnect();
-        clearTimeout(timer);
-      };
-    } else {
-      revealEls.forEach(el => el.classList.add('active'));
-    }
-  }, [data]);
 
   // Handle Form Submit
   const handleSubmitLead = async (e) => {
@@ -146,6 +288,12 @@ _Looking forward to discussing our 360° growth strategy!_`;
 
   return (
     <div className="landing-page-root">
+      {/* Scroll Progress Line */}
+      <div ref={progressBarRef} className="scroll-progress-line" aria-hidden="true" />
+
+      {/* Cinematic Golden Phoenix Motion Layer */}
+      <BirdLayer activeFaq={activeFaq} />
+
       {/* Ambient Radial Glows */}
       <div className="ambient-glow glow-top" aria-hidden="true"></div>
       <div className="ambient-glow glow-middle" aria-hidden="true"></div>
@@ -165,19 +313,19 @@ _Looking forward to discussing our 360° growth strategy!_`;
       {/* Navigation Header */}
       <header className={`site-header ${isScrolled ? 'scrolled' : ''}`}>
         <div className="container nav-container">
-          <a href="#" className="brand-logo" aria-label="Phonixe Media Home">
+          <a href="#" className="brand-logo" onClick={(e) => handleNavClick(e, '#hero')} aria-label="Phonixe Media Home">
             <img src="/assets/logo-horizontal.png" alt="Phonixe Media" className="nav-brand-logo" />
           </a>
 
           {/* Desktop Nav */}
           <nav className="desktop-nav">
             <ul className="nav-links">
-              <li><a href="#services">Services</a></li>
-              <li><a href="#niches">Who We Serve</a></li>
-              <li><a href="#process">Our System</a></li>
-              <li><a href="#results">Case Studies</a></li>
-              <li><a href="#why-us">Why Phonixe</a></li>
-              <li><a href="#faq">FAQ</a></li>
+              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Services</a></li>
+              <li><a href="#niches" onClick={(e) => handleNavClick(e, '#niches')}>Who We Serve</a></li>
+              <li><a href="#process" onClick={(e) => handleNavClick(e, '#process')}>Our System</a></li>
+              <li><a href="#results" onClick={(e) => handleNavClick(e, '#results')}>Case Studies</a></li>
+              <li><a href="#why-us" onClick={(e) => handleNavClick(e, '#why-us')}>Why Phonixe</a></li>
+              <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')}>FAQ</a></li>
             </ul>
           </nav>
 
@@ -188,6 +336,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
               target="_blank" 
               rel="noopener noreferrer" 
               className="btn-whatsapp-header"
+              data-bird-hover
             >
               <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor">
                 <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
@@ -217,12 +366,12 @@ _Looking forward to discussing our 360° growth strategy!_`;
         {/* Mobile Drawer */}
         <div className={`mobile-nav-drawer ${mobileMenuOpen ? 'open' : ''}`}>
           <ul className="mobile-nav-links">
-            <li><a href="#services" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Services</a></li>
-            <li><a href="#niches" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Who We Serve</a></li>
-            <li><a href="#process" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Our System</a></li>
-            <li><a href="#results" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Case Studies</a></li>
-            <li><a href="#why-us" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Why Phonixe</a></li>
-            <li><a href="#faq" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>FAQ</a></li>
+            <li><a href="#services" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#services'); }}>Services</a></li>
+            <li><a href="#niches" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#niches'); }}>Who We Serve</a></li>
+            <li><a href="#process" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#process'); }}>Our System</a></li>
+            <li><a href="#results" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#results'); }}>Case Studies</a></li>
+            <li><a href="#why-us" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#why-us'); }}>Why Phonixe</a></li>
+            <li><a href="#faq" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#faq'); }}>FAQ</a></li>
           </ul>
           <div className="mobile-drawer-cta">
             <button className="btn btn-gold w-full" onClick={() => { setMobileMenuOpen(false); setIsModalOpen(true); }}>
@@ -266,22 +415,22 @@ _Looking forward to discussing our 360° growth strategy!_`;
                   <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </button>
-              <a href="#process" className="btn btn-outline-glass btn-large">
+              <a href="#process" onClick={(e) => handleNavClick(e, '#process')} className="btn btn-outline-glass btn-large">
                 <span>{c.secondaryCtaText || 'See How We Work'}</span>
               </a>
             </div>
 
             <div className="hero-trust-bar">
-              <span className="trust-icon">✦</span>
+              <span className="trust-icon" data-bird-hover>✦</span>
               <span>{c.trustLine || 'Strategy • Content • Personal Branding • Growth'}</span>
             </div>
 
             <div className="hero-micro-proof">
               <div className="avatar-group">
-                <span className="avatar-circle">🔮</span>
-                <span className="avatar-circle">🔢</span>
-                <span className="avatar-circle">🏛️</span>
-                <span className="avatar-circle">✨</span>
+                <span className="avatar-circle" data-bird-hover>🔮</span>
+                <span className="avatar-circle" data-bird-hover>🔢</span>
+                <span className="avatar-circle" data-bird-hover>🏛️</span>
+                <span className="avatar-circle" data-bird-hover>✨</span>
               </div>
               <div className="micro-proof-text">
                 <strong>100% Organic Growth</strong> tailored to convert followers into high-ticket clients
@@ -293,7 +442,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <div className="growth-dashboard-mockup glass-card">
               <div className="mockup-header">
                 <div className="user-profile-badge">
-                  <div className="profile-pic-container">
+                  <div className="profile-pic-container" data-bird-hover>
                     <img src="/assets/phoenix-badge.png" alt="Phonixe Logo Badge" className="mini-gold-phoenix" />
                   </div>
                   <div>
@@ -332,7 +481,14 @@ _Looking forward to discussing our 360° growth strategy!_`;
                     </linearGradient>
                   </defs>
                   <path d="M0,105 Q60,95 100,80 T200,60 T300,35 T400,10 L400,120 L0,120 Z" fill="url(#chartGrad)" />
-                  <path d="M0,105 Q60,95 100,80 T200,60 T300,35 T400,10" fill="none" stroke="#FFD700" strokeWidth="3.5" />
+                  <path 
+                    ref={chartPathRef}
+                    d="M0,105 Q60,95 100,80 T200,60 T300,35 T400,10" 
+                    fill="none" 
+                    stroke="#FFD700" 
+                    strokeWidth="3.5" 
+                    style={{ strokeDasharray: 450, strokeDashoffset: 450, transition: 'stroke-dashoffset 1.8s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                  />
                   <circle cx="100" cy="80" r="4" fill="#FFD700" />
                   <circle cx="200" cy="60" r="4" fill="#FFD700" />
                   <circle cx="300" cy="35" r="4" fill="#FFD700" />
@@ -373,7 +529,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
           <div className="stats-grid">
             {stats.map((st, idx) => (
               <div className="stat-card glass-card reveal" key={st._id || idx}>
-                <div className="stat-icon-wrapper">✦</div>
+                <div className="stat-icon-wrapper" data-bird-hover>✦</div>
                 <div className="stat-number-row">
                   <span>{st.number}</span>
                   <span className="stat-suffix">{st.suffix}</span>
@@ -397,7 +553,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
 
           <div className="niche-cards-grid">
             <div className="niche-card glass-card reveal">
-              <div className="niche-card-icon">🔮</div>
+              <div className="niche-card-icon" data-bird-hover>🔮</div>
               <h3>Tarot Readers & Intuitives</h3>
               <p>Convert general curiosity into deeply engaged 1-on-1 private reading clients through high-trust card explanation reels, predictive insights, and ethical boundaries.</p>
               <div className="niche-focus-tags">
@@ -408,7 +564,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="niche-card glass-card reveal">
-              <div className="niche-card-icon">🔢</div>
+              <div className="niche-card-icon" data-bird-hover>🔢</div>
               <h3>Numerologists & Astro Mentors</h3>
               <p>Break down complex birth date matrixes, destiny numbers, and master numbers into digestible visual carousels and relatable reels that evoke instant realization.</p>
               <div className="niche-focus-tags">
@@ -419,7 +575,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="niche-card glass-card reveal">
-              <div className="niche-card-icon">🏛️</div>
+              <div className="niche-card-icon" data-bird-hover>🏛️</div>
               <h3>Vastu & Energy Experts</h3>
               <p>Showcase real property transformations, architectural energy remedies, and actionable lifestyle adjustments that position you as the definitive high-ticket consultant.</p>
               <div className="niche-focus-tags">
@@ -430,7 +586,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="niche-card glass-card reveal">
-              <div className="niche-card-icon">💫</div>
+              <div className="niche-card-icon" data-bird-hover>💫</div>
               <h3>Akashic Record Readers & Healers</h3>
               <p>Demystify soul history, karmic blockages, and ancestral trauma with profound storytelling frameworks that make prospective seekers feel seen, understood, and guided.</p>
               <div className="niche-focus-tags">
@@ -441,7 +597,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="niche-card glass-card reveal">
-              <div className="niche-card-icon">🤝</div>
+              <div className="niche-card-icon" data-bird-hover>🤝</div>
               <h3>Relationship & Marriage Mentors</h3>
               <p>Address painful communication breakdowns, attachment triggers, and partnership healing with empathetic video scripts that build immediate emotional safety.</p>
               <div className="niche-focus-tags">
@@ -452,7 +608,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="niche-card glass-card reveal">
-              <div className="niche-card-icon">🌿</div>
+              <div className="niche-card-icon" data-bird-hover>🌿</div>
               <h3>Spiritual, Life & Wellness Mentors</h3>
               <p>Establish sovereign personal authority, articulate your signature methodology, and attract dream coaching clients who value spiritual depth over superficial hacks.</p>
               <div className="niche-focus-tags">
@@ -476,32 +632,32 @@ _Looking forward to discussing our 360° growth strategy!_`;
 
           <div className="problems-grid">
             <div className="problem-card glass-card reveal">
-              <div className="problem-icon">❌</div>
+              <div className="problem-icon" data-bird-hover>❌</div>
               <h3>Random Content Without A Strategy</h3>
               <p>Waking up wondering "what should I record today?" resulting in disjointed topics that confuse the algorithm and leave your audience unclear about what you actually offer.</p>
             </div>
             <div className="problem-card glass-card reveal">
-              <div className="problem-icon">❌</div>
+              <div className="problem-icon" data-bird-hover>❌</div>
               <h3>Low Engagement Despite Daily Effort</h3>
               <p>Spending 3 hours filming and editing a video only to see 150 views and 10 likes from close friends. It feels disheartening and completely unsustainable.</p>
             </div>
             <div className="problem-card glass-card reveal">
-              <div className="problem-icon">❌</div>
+              <div className="problem-icon" data-bird-hover>❌</div>
               <h3>No Clear Personal Brand Positioning</h3>
               <p>Blending in with thousands of other coaches. Without sharp visual identity, signature frameworks, and distinct voice, visitors scroll right past your profile.</p>
             </div>
             <div className="problem-card glass-card reveal">
-              <div className="problem-icon">❌</div>
+              <div className="problem-icon" data-bird-hover>❌</div>
               <h3>Views That Never Turn Into Inquiries</h3>
               <p>A reel hits 50,000 views, yet your calendar has zero consultations booked. Vanity attention without an intentional conversion bridge does not pay your bills.</p>
             </div>
             <div className="problem-card glass-card reveal">
-              <div className="problem-icon">❌</div>
+              <div className="problem-icon" data-bird-hover>❌</div>
               <h3>Creative Burnout & Lack Of Consistency</h3>
               <p>Juggling client consultations, life, and content production alone leads to constant stop-and-start cycles that reset your social media momentum every month.</p>
             </div>
             <div className="problem-card glass-card reveal">
-              <div className="problem-icon">❌</div>
+              <div className="problem-icon" data-bird-hover>❌</div>
               <h3>No Predictable Content & Shooting System</h3>
               <p>Uncertainty around lighting, camera confidence, vocal inflection, scripting hooks, and video aesthetics keeps you feeling amateur instead of industry-leading.</p>
             </div>
@@ -537,7 +693,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             {services.map((srv, idx) => (
               <div className="service-card glass-card reveal" key={srv._id || idx}>
                 <div className="service-badge">{srv.badge}</div>
-                <div className="service-icon-box">✦</div>
+                <div className="service-icon-box" data-bird-hover>✦</div>
                 <h3 className="service-title">{srv.title}</h3>
                 <p className="service-desc">{srv.desc}</p>
                 <ul className="service-features">
@@ -573,7 +729,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
 
           <div className="process-timeline">
             <div className="process-step glass-card reveal">
-              <div className="step-number-badge">01</div>
+              <div className="step-number-badge" data-bird-hover>01</div>
               <span className="step-tag">Phase 1 • Assessment</span>
               <h3>Discover</h3>
               <p className="step-desc">
@@ -587,7 +743,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="process-step glass-card reveal">
-              <div className="step-number-badge">02</div>
+              <div className="step-number-badge" data-bird-hover>02</div>
               <span className="step-tag">Phase 2 • Architecture</span>
               <h3>Strategize</h3>
               <p className="step-desc">
@@ -601,7 +757,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="process-step glass-card reveal">
-              <div className="step-number-badge">03</div>
+              <div className="step-number-badge" data-bird-hover>03</div>
               <span className="step-tag">Phase 3 • Execution</span>
               <h3>Create</h3>
               <p className="step-desc">
@@ -615,7 +771,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="process-step glass-card reveal">
-              <div className="step-number-badge">04</div>
+              <div className="step-number-badge" data-bird-hover>04</div>
               <span className="step-tag">Phase 4 • Scale</span>
               <h3>Optimize</h3>
               <p className="step-desc">
@@ -630,7 +786,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
           </div>
 
           <div className="process-guarantee-box glass-card text-center reveal">
-            <div className="guarantee-icon">⚡</div>
+            <div className="guarantee-icon" data-bird-hover>⚡</div>
             <h4>Spend Just 2–3 Hours Per Month Recording. We Handle The Rest.</h4>
             <p>No more staring at video editing timelines or wrestling with captions at midnight.</p>
             <button className="btn btn-gold" onClick={() => setIsModalOpen(true)}>
@@ -715,7 +871,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
                 <div className="stars-row">{'★'.repeat(t.stars || 5)}</div>
                 <p className="testimonial-quote">"{t.quote}"</p>
                 <div className="testimonial-author">
-                  <div className="placeholder-avatar">{t.avatarEmoji || '✨'}</div>
+                  <div className="placeholder-avatar" data-bird-hover>{t.avatarEmoji || '✨'}</div>
                   <div className="author-info">
                     <span className="author-name">{t.authorName}</span>
                     <span className="author-niche">{t.niche}</span>
@@ -739,7 +895,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </p>
 
               <div className="why-brand-highlight glass-card">
-                <img src="/assets/phoenix-badge.png" alt="Phonixe Logo Badge" className="why-logo-img" />
+                <img src="/assets/phoenix-badge.png" alt="Phonixe Logo Badge" className="why-logo-img" data-bird-hover />
                 <div className="why-brand-quote">
                   <strong>Born From Rising High:</strong> Like the mythical Phoenix, we take your hidden expertise and elevate it into a radiant authority that commands attention and converts into revenue.
                 </div>
@@ -752,49 +908,49 @@ _Looking forward to discussing our 360° growth strategy!_`;
 
             <div className="why-us-points reveal">
               <div className="why-point-item glass-card">
-                <div className="why-point-icon">01</div>
+                <div className="why-point-icon" data-bird-hover>01</div>
                 <div>
                   <h4>Strategy Before Posting</h4>
                   <p>We never post blindly. Every single piece of content has a precise purpose: to attract, educate, build deep trust, or prompt a discovery call.</p>
                 </div>
               </div>
               <div className="why-point-item glass-card">
-                <div className="why-point-icon">02</div>
+                <div className="why-point-icon" data-bird-hover>02</div>
                 <div>
                   <h4>Content Built Around Business Goals</h4>
                   <p>We don't chase useless viral trends. We target decision-makers and seekers who have the desire and budget to invest in your coaching.</p>
                 </div>
               </div>
               <div className="why-point-item glass-card">
-                <div className="why-point-icon">03</div>
+                <div className="why-point-icon" data-bird-hover>03</div>
                 <div>
                   <h4>Strong Focus On Authentic Personal Branding</h4>
                   <p>We extract your natural charisma, personal story, and unique worldview so that you build loyal clients, not just passive viewers.</p>
                 </div>
               </div>
               <div className="why-point-item glass-card">
-                <div className="why-point-icon">04</div>
+                <div className="why-point-icon" data-bird-hover>04</div>
                 <div>
                   <h4>Consistent & Proactive Communication</h4>
                   <p>No disappearing contacts. You get direct WhatsApp access, dedicated account managers, and scheduled weekly updates.</p>
                 </div>
               </div>
               <div className="why-point-item glass-card">
-                <div className="why-point-icon">05</div>
+                <div className="why-point-icon" data-bird-hover>05</div>
                 <div>
                   <h4>Data-Driven Optimization</h4>
                   <p>We review retention graphs, hook drop-off rates, and lead metrics weekly, constantly calibrating the strategy to maximize your ROI.</p>
                 </div>
               </div>
               <div className="why-point-item glass-card">
-                <div className="why-point-icon">06</div>
+                <div className="why-point-icon" data-bird-hover>06</div>
                 <div>
                   <h4>Customized Content Systems for Coaches</h4>
                   <p>From Vastu remedies to Tarot spreads and spiritual awakenings, we understand your niche deeply and write scripts that sound authentic to your craft.</p>
                 </div>
               </div>
               <div className="why-point-item glass-card">
-                <div className="why-point-icon">07</div>
+                <div className="why-point-icon" data-bird-hover>07</div>
                 <div>
                   <h4>Focus On Both Attention AND Conversion</h4>
                   <p>Attention gets them in the door; our conversion architecture and DM frameworks turn that attention into confirmed clients in your calendar.</p>
@@ -821,7 +977,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
                 <div className={`faq-item glass-card ${isOpen ? 'active' : ''}`} key={f._id || idx}>
                   <button className="faq-question" onClick={() => setActiveFaq(isOpen ? null : idx)}>
                     <span>{idx + 1}. {f.question}</span>
-                    <span className="faq-toggle-icon">+</span>
+                    <span className="faq-toggle-icon" data-bird-hover>+</span>
                   </button>
                   <div className="faq-answer">
                     <p>{f.answer}</p>
@@ -860,6 +1016,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="btn btn-whatsapp-large"
+                data-bird-hover
               >
                 <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
                   <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
@@ -881,7 +1038,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
       <footer className="site-footer">
         <div className="container footer-container">
           <div className="footer-brand-col">
-            <a href="#" className="brand-logo" style={{ marginBottom: '18px' }} aria-label="Phonixe Media Home">
+            <a href="#" onClick={(e) => handleNavClick(e, '#hero')} className="brand-logo" style={{ marginBottom: '18px' }} aria-label="Phonixe Media Home">
               <img src="/assets/logo-horizontal.png" alt="Phonixe Media" className="footer-brand-logo" />
             </a>
             <p className="footer-tagline">“{c.tagline || '360° Social Media Growth & Personal Branding'}”</p>
@@ -893,24 +1050,24 @@ _Looking forward to discussing our 360° growth strategy!_`;
           <div className="footer-links-col">
             <h4 className="footer-heading">Navigation</h4>
             <ul className="footer-menu">
-              <li><a href="#services">Services</a></li>
-              <li><a href="#niches">Coaching Niches</a></li>
-              <li><a href="#process">Our 4-Step System</a></li>
-              <li><a href="#results">Case Studies</a></li>
-              <li><a href="#why-us">Why Phonixe</a></li>
-              <li><a href="#faq">FAQ</a></li>
+              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Services</a></li>
+              <li><a href="#niches" onClick={(e) => handleNavClick(e, '#niches')}>Coaching Niches</a></li>
+              <li><a href="#process" onClick={(e) => handleNavClick(e, '#process')}>Our 4-Step System</a></li>
+              <li><a href="#results" onClick={(e) => handleNavClick(e, '#results')}>Case Studies</a></li>
+              <li><a href="#why-us" onClick={(e) => handleNavClick(e, '#why-us')}>Why Phonixe</a></li>
+              <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')}>FAQ</a></li>
             </ul>
           </div>
 
           <div className="footer-links-col">
             <h4 className="footer-heading">Services</h4>
             <ul className="footer-menu">
-              <li><a href="#services">Organic Social Marketing</a></li>
-              <li><a href="#services">Shooting & Direction</a></li>
-              <li><a href="#services">Short-Form Reels</a></li>
-              <li><a href="#services">Content Strategy</a></li>
-              <li><a href="#services">Personal Branding</a></li>
-              <li><a href="#services">Lead Generation Funnels</a></li>
+              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Organic Social Marketing</a></li>
+              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Shooting & Direction</a></li>
+              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Short-Form Reels</a></li>
+              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Content Strategy</a></li>
+              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Personal Branding</a></li>
+              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Lead Generation Funnels</a></li>
             </ul>
           </div>
 
@@ -968,6 +1125,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
           target="_blank" 
           rel="noopener noreferrer" 
           className="floating-whatsapp-btn"
+          data-bird-hover
           aria-label="WhatsApp"
         >
           <svg viewBox="0 0 16 16" width="30" height="30" fill="#FFF">

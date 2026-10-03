@@ -2527,3 +2527,106 @@ button {
   }
 }
 
+/* ==========================================================================
+   CINEMATIC MOTION LAYER & PHOENIX BIRD SIGNATURE EFFECT
+   ========================================================================== */
+
+/* Fixed Phoenix Bird Element */
+.phoenix-bird-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 85; /* Above cards and section layers, below sticky navbar (100), modal (9999) & floating whatsapp (99) */
+  will-change: transform, opacity;
+  transform-origin: center center;
+}
+
+.phoenix-bird-img {
+  width: 76px;
+  height: auto;
+  filter: drop-shadow(0 0 16px rgba(229, 169, 60, 0.85)) drop-shadow(0 0 32px rgba(245, 158, 11, 0.45));
+  display: block;
+  transform-origin: center center;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Background Embers Trail Canvas */
+.phoenix-embers-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 84;
+}
+
+/* Thin Gold Scroll-Progress Line under Navbar */
+.scroll-progress-line {
+  position: fixed;
+  top: 72px; /* Placed seamlessly directly underneath sticky navbar */
+  left: 0;
+  width: 100%;
+  height: 2.5px;
+  background: linear-gradient(90deg, var(--gold-light), var(--gold-bright), #FFF);
+  box-shadow: 0 0 10px rgba(229, 169, 60, 0.8), 0 0 20px rgba(245, 158, 11, 0.4);
+  z-index: 99;
+  transform-origin: left center;
+  transform: scaleX(0);
+  pointer-events: none;
+}
+
+/* Icon Hover Glow Rings for [data-bird-hover] */
+[data-bird-hover] {
+  transition: box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+[data-bird-hover].bird-perched-target {
+  box-shadow: 0 0 22px rgba(229, 169, 60, 0.95), 0 0 45px rgba(245, 158, 11, 0.5) !important;
+  transform: scale(1.12);
+}
+
+/* Process Step Glow when Bird Lands during Scroll Pinning */
+.process-step {
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+}
+
+.process-step.bird-perched-glow {
+  border-color: rgba(229, 169, 60, 0.85) !important;
+  box-shadow: 0 0 35px rgba(229, 169, 60, 0.35), var(--gold-glow);
+  transform: translateY(-4px);
+}
+
+/* Ambient Radial Glow Parallax */
+.ambient-glow {
+  will-change: transform;
+}
+
+/* Smooth Mask-Reveal Text Wrappers */
+.mask-reveal-wrap {
+  overflow: hidden;
+  display: block;
+}
+
+.mask-reveal-inner {
+  display: block;
+  will-change: transform, opacity;
+}
+
+/* Accessibility: prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .phoenix-bird-wrapper {
+    position: absolute !important;
+    top: 300px !important;
+    right: 15% !important;
+  }
+  .phoenix-embers-canvas,
+  .scroll-progress-line {
+    display: none !important;
+  }
+}
+
+
