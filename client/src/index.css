@@ -2022,13 +2022,19 @@ button {
 
 /* Scroll Animation classes */
 .reveal {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.reveal.active {
   opacity: 1;
   transform: translateY(0);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-page-root.js-reveal-active .reveal:not(.active) {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.reveal.active {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
 }
 
 /* Responsive Media Queries */

@@ -2371,9 +2371,13 @@ button {
    SCROLL ANIMATIONS (INTERSECTION OBSERVER)
    ========================================================================== */
 .reveal {
-  opacity: 0;
+  opacity: 1;
   transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
+}
+
+body.js-reveal-active .reveal:not(.active) {
+  opacity: 0;
 }
 
 .reveal.fade-up {
@@ -2389,8 +2393,8 @@ button {
 }
 
 .reveal.active {
-  opacity: 1;
-  transform: translate(0, 0);
+  opacity: 1 !important;
+  transform: translate(0, 0) !important;
 }
 
 /* Stagger Delays */

@@ -284,25 +284,21 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
   const quickRotation = useRef(null);
   const quickScaleX = useRef(null);
 
-  // Compute element anchor point in page coordinates
-  const computeAnchorPoint = useCallback((anchor) => {
+  // Compute real-time element viewport coordinates
+  const getAnchorViewportPos = useCallback((anchor) => {
+    if (!anchor) return null;
     const el = document.querySelector(anchor.selector);
     if (!el) return null;
     const rect = el.getBoundingClientRect();
-    const scrollY = window.scrollY;
-    const scrollX = window.scrollX;
 
-    let x = rect.left + scrollX;
-    let y = rect.top + scrollY;
+    let x = rect.left;
+    let y = rect.top;
 
     if (anchor.side === 'top-left') {
       x += (anchor.offsetX || 0);
       y += (anchor.offsetY || 0);
     } else if (anchor.side === 'top-right') {
       x += rect.width + (anchor.offsetX || 0);
-      y += (anchor.offsetY || 0);
-    } else if (anchor.side === 'top') {
-      x += rect.width / 2 + (anchor.offsetX || 0);
       y += (anchor.offsetY || 0);
     } else if (anchor.side === 'center') {
       x += rect.width / 2 + (anchor.offsetX || 0);
@@ -328,11 +324,6 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       element: el
     };
   }, []);
-
-  // Cache all anchor page coordinates
-  const refreshAnchorCoords = useCallback(() => {
-    anchorCoordsRef.current = anchors.map(computeAnchorPoint);
-  }, [anchors, computeAnchorPoint]);
 
   // Gentle idle float while perched
   const startIdleFloat = useCallback(() => {
@@ -440,18 +431,16 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     quickScaleX.current = gsap.quickTo(birdImg, 'scaleX', { duration: 0.3, ease: 'power2.out' });
 
     // Initial position on Hero
-    const heroAnchor = anchorCoordsRef.current[0];
+    const heroAnchor = getAnchorViewportPos(anchors[0]);
     if (heroAnchor) {
-      const initialViewportX = heroAnchor.x;
-      const initialViewportY = heroAnchor.y - window.scrollY;
       gsap.set(birdEl, {
-        x: initialViewportX,
-        y: initialViewportY,
+        x: heroAnchor.x,
+        y: heroAnchor.y,
         scale: isMobile ? heroAnchor.scale * 0.65 : heroAnchor.scale,
         rotation: heroAnchor.rotation,
         opacity: 1
       });
-      lastPosRef.current = { x: initialViewportX, y: initialViewportY };
+      lastPosRef.current = { x: heroAnchor.x, y: heroAnchor.y };
       startIdleFloat();
     }
 
@@ -462,9 +451,6 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
 
     // SCROLL-DRIVEN FLIGHT TIMELINE
     // Scrub bird through anchors as user scrolls the page
-    const totalScrollHeight = () => document.documentElement.scrollHeight - window.innerHeight;
-    
-    // Master flight scroll trigger
     const flightTrigger = ScrollTrigger.create({
       trigger: '.landing-page-root',
       start: 'top top',
@@ -484,22 +470,15 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
 
         currentAnchorIndexRef.current = currentIndex;
 
-        const a1 = anchorCoordsRef.current[currentIndex] || computeAnchorPoint(anchors[currentIndex]);
-        const a2 = anchorCoordsRef.current[currentIndex + 1] || computeAnchorPoint(anchors[currentIndex + 1]);
+        const v1 = getAnchorViewportPos(anchors[currentIndex]);
+        const v2 = getAnchorViewportPos(anchors[currentIndex + 1]);
 
-        if (!a1 || !a2) return;
-
-        // Current scroll offset
-        const currentScrollY = window.scrollY;
-
-        // Page coordinates to current viewport coordinates
-        const v1 = { x: a1.x, y: a1.y - currentScrollY };
-        const v2 = { x: a2.x, y: a2.y - currentScrollY };
+        if (!v1 || !v2) return;
 
         // Quadratic curve in viewport space for arched flight
         const t = segmentProgress;
         // Arc peak: lift bird up during flight between sections
-        const arcLift = -Math.min(120, Math.abs(v2.x - v1.x) * 0.4 + 40);
+        const arcLift = -Math.min(100, Math.abs(v2.x - v1.x) * 0.35 + 30);
         const midX = (v1.x + v2.x) / 2;
         const midY = (v1.y + v2.y) / 2 + arcLift;
 
@@ -521,11 +500,11 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
         const facingDirection = dx < -1 ? -1 : dx > 1 ? 1 : (v2.x < v1.x ? -1 : 1);
 
         // Scale and opacity
-        let targetScale = (1 - t) * a1.scale + t * a2.scale;
+        let targetScale = (1 - t) * v1.scale + t * v2.scale;
         if (isMobile) targetScale *= 0.65;
 
         let targetOpacity = 1;
-        if (a2.fade && t > 0.6) {
+        if (v2.fade && t > 0.6) {
           targetOpacity = 1 - (t - 0.6) / 0.4;
         }
 
@@ -534,7 +513,7 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
           x: currentX,
           y: currentY,
           scale: targetScale,
-          rotation: (1 - t) * a1.rotation + t * a2.rotation + flightAngle,
+          rotation: (1 - t) * v1.rotation + t * v2.rotation + flightAngle,
           opacity: targetOpacity
         });
 
@@ -551,20 +530,20 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       }
     });
 
-    // 4-STEP GROWTH SYSTEM DESKTOP PINNING
+    // 4-STEP GROWTH SYSTEM DESKTOP PINNING (Pins timeline cleanly for 450px)
     let processPinTrigger = null;
     if (!isMobile && !prefersReducedMotion) {
-      const processEl = document.querySelector('#process');
+      const timelineEl = document.querySelector('.process-timeline');
       const processSteps = document.querySelectorAll('.process-step');
 
-      if (processEl && processSteps.length >= 4) {
+      if (timelineEl && processSteps.length >= 4) {
         processPinTrigger = ScrollTrigger.create({
-          trigger: '#process',
-          start: 'top top+=80',
-          end: '+=1400',
+          trigger: timelineEl,
+          start: 'top 20%',
+          end: '+=450',
           pin: true,
           pinSpacing: true,
-          scrub: 1,
+          scrub: 0.6,
           onUpdate: (self) => {
             const stepIdx = Math.min(3, Math.floor(self.progress * 4));
             processSteps.forEach((step, idx) => {
@@ -581,21 +560,28 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
 
     // Refresh triggers on resize, fonts loaded, orientation changes
     const onResize = () => {
-      refreshAnchorCoords();
       ScrollTrigger.refresh();
     };
 
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
+    const initTimer = setTimeout(() => {
+      const heroPos = getAnchorViewportPos(anchors[0]);
+      if (heroPos) {
+        gsap.set(birdEl, { x: heroPos.x, y: heroPos.y, opacity: 1 });
+        lastPosRef.current = { x: heroPos.x, y: heroPos.y };
+      }
+      ScrollTrigger.refresh();
+    }, 200);
 
+    window.addEventListener('resize', onResize);
     return () => {
+      clearTimeout(initTimer);
       flightTrigger.kill();
       if (processPinTrigger) processPinTrigger.kill();
       window.removeEventListener('resize', onResize);
       window.removeEventListener('orientationchange', onResize);
       stopIdleFloat();
     };
-  }, [anchors, computeAnchorPoint, refreshAnchorCoords, startIdleFloat, stopIdleFloat]);
+  }, [anchors, getAnchorViewportPos, startIdleFloat, stopIdleFloat]);
 
   // DESKTOP ICON HOVER INTERACTION
   // Add data-bird-hover to any icon element: bird swoops over, perches at ~0.35 scale, gold ring glows

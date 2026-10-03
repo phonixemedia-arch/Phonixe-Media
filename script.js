@@ -55,23 +55,28 @@ document.addEventListener('DOMContentLoaded', () => {
      3. SCROLL-TRIGGERED REVEAL ANIMATIONS (INTERSECTION OBSERVER)
   -------------------------------------------------------------------------- */
   const revealElements = document.querySelectorAll('.reveal');
+  document.body.classList.add('js-reveal-active');
 
   if ('IntersectionObserver' in window) {
     const revealObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('active');
-          // Once animated, unobserve for better performance
           observer.unobserve(entry.target);
         }
       });
     }, {
       root: null,
-      threshold: 0.12,
-      rootMargin: '0px 0px -40px 0px'
+      threshold: 0.05,
+      rootMargin: '100px 0px 100px 0px'
     });
 
     revealElements.forEach(el => revealObserver.observe(el));
+
+    // Fallback: reveal elements gracefully
+    setTimeout(() => {
+      revealElements.forEach(el => el.classList.add('active'));
+    }, 400);
   } else {
     // Fallback for older browsers
     revealElements.forEach(el => el.classList.add('active'));

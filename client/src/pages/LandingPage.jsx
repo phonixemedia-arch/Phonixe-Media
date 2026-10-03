@@ -147,59 +147,39 @@ export default function LandingPage({ navigateTo }) {
     return () => ctx.revert();
   }, []);
 
-  // 4. Cinematic Line-by-Line Reveals and Card Staggers
+  // 4. Scroll Reveal Animations with IntersectionObserver & Auto-reveal fallback
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
+    const rootEl = document.querySelector('.landing-page-root');
+    if (rootEl) rootEl.classList.add('js-reveal-active');
 
-    const ctx = gsap.context(() => {
-      // Stagger section header elements
-      gsap.utils.toArray('.section-header').forEach((header) => {
-        gsap.from(header.children, {
-          y: 28,
-          opacity: 0,
-          stagger: 0.1,
-          duration: 0.85,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: header,
-            start: 'top 85%',
-            toggleActions: 'play none none none'
+    const revealEls = document.querySelectorAll('.reveal');
+    
+    // Immediate activation for elements in or near viewport
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            obs.unobserve(entry.target);
           }
         });
-      });
+      }, { rootMargin: '120px 0px 120px 0px', threshold: 0.05 });
 
-      // Card Grid Staggers (0.08s)
-      const cardGrids = [
-        { grid: '.stats-grid', cards: '.stat-card' },
-        { grid: '.niche-cards-grid', cards: '.niche-card' },
-        { grid: '.problems-grid', cards: '.problem-card' },
-        { grid: '.services-grid', cards: '.service-card' },
-        { grid: '.case-studies-grid', cards: '.case-card' },
-        { grid: '.testimonials-grid', cards: '.testimonial-card' },
-        { grid: '.why-us-points', cards: '.why-point-item' }
-      ];
+      revealEls.forEach(el => observer.observe(el));
 
-      cardGrids.forEach(({ grid, cards }) => {
-        const gridEl = document.querySelector(grid);
-        if (gridEl) {
-          gsap.from(cards, {
-            y: 30,
-            opacity: 0,
-            duration: 0.75,
-            stagger: 0.08,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: grid,
-              start: 'top 82%',
-              toggleActions: 'play none none none'
-            }
-          });
-        }
-      });
-    });
+      // Auto-reveal fallback: ensures all elements become active gracefully
+      const timer = setTimeout(() => {
+        revealEls.forEach(el => el.classList.add('active'));
+        ScrollTrigger.refresh();
+      }, 400);
 
-    return () => ctx.revert();
+      return () => {
+        observer.disconnect();
+        clearTimeout(timer);
+      };
+    } else {
+      revealEls.forEach(el => el.classList.add('active'));
+    }
   }, [data]);
 
   // 5. Hero Chart Path Draw Animation
