@@ -36,6 +36,8 @@ export default function LandingPage({ navigateTo }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isNavHidden, setIsNavHidden] = useState(false);
+  const [isPastHero, setIsPastHero] = useState(false);
 
   const lenisRef = useRef(null);
   const progressBarRef = useRef(null);
@@ -197,14 +199,307 @@ export default function LandingPage({ navigateTo }) {
     loadContent();
   }, []);
 
-  // Sticky Navbar Scroll Listener
+  // 1. Smart Directional Navbar: Hide on scroll down, show on scroll up, gold hairline past hero
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
     const onScroll = () => {
-      setIsScrolled(window.scrollY > 40);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const heroEl = document.getElementById('hero');
+          const heroHeight = heroEl ? heroEl.offsetHeight : 650;
+
+          setIsScrolled(currentScrollY > 40);
+          const pastHero = currentScrollY > (heroHeight - 90);
+          setIsPastHero(pastHero);
+
+          if (!pastHero) {
+            setIsNavHidden(false);
+          } else {
+            const diff = currentScrollY - lastScrollY;
+            if (diff > 8 && currentScrollY > heroHeight + 60) {
+              // Scrolling down past hero -> hide navbar
+              setIsNavHidden(true);
+            } else if (diff < -8) {
+              // Scrolling up -> reveal navbar
+              setIsNavHidden(false);
+            }
+          }
+
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
+
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // 2. Color-Temperature Story: Harsh Reality Muted & Banner Ignite
+  useEffect(() => {
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (isReduced) return;
+
+    let hasIgnited = false;
+
+    const checkColorTemperature = () => {
+      const problemSec = document.getElementById('problem');
+      const bannerEl = document.querySelector('.problem-transition-banner');
+      const ambientGlows = document.querySelectorAll('.ambient-glow');
+      const problemCards = document.querySelectorAll('.problem-card');
+      const birdWrapper = document.querySelector('.phoenix-bird-wrapper');
+
+      if (!problemSec || !bannerEl) return;
+
+      const problemRect = problemSec.getBoundingClientRect();
+      const bannerRect = bannerEl.getBoundingClientRect();
+      const vh = window.innerHeight;
+
+      // Banner enters viewport: ignite everything back to full gold
+      if (bannerRect.top <= vh * 0.85) {
+        if (!hasIgnited) {
+          hasIgnited = true;
+          ambientGlows.forEach(g => {
+            g.classList.remove('ambient-muted');
+            g.classList.add('ambient-ignited');
+          });
+          if (birdWrapper) {
+            birdWrapper.classList.remove('bird-muted');
+            birdWrapper.classList.add('bird-ignited');
+          }
+          bannerEl.classList.add('ignite-gold-pulse');
+          problemCards.forEach(card => card.classList.add('problem-faded'));
+
+          setTimeout(() => {
+            ambientGlows.forEach(g => g.classList.remove('ambient-ignited'));
+            if (birdWrapper) birdWrapper.classList.remove('bird-ignited');
+          }, 1200);
+        }
+      } else if (problemRect.top <= vh * 0.55 && problemRect.bottom >= vh * 0.2) {
+        // Inside problem section before the rescue banner: muted cool tone
+        if (!hasIgnited) {
+          ambientGlows.forEach(g => g.classList.add('ambient-muted'));
+          if (birdWrapper) birdWrapper.classList.add('bird-muted');
+        }
+      } else if (problemRect.top > vh * 0.75) {
+        // Above problem section: reset to initial warmth
+        hasIgnited = false;
+        ambientGlows.forEach(g => {
+          g.classList.remove('ambient-muted');
+          g.classList.remove('ambient-ignited');
+        });
+        if (birdWrapper) {
+          birdWrapper.classList.remove('bird-muted');
+          birdWrapper.classList.remove('bird-ignited');
+        }
+        problemCards.forEach(card => card.classList.remove('problem-faded'));
+        bannerEl.classList.remove('ignite-gold-pulse');
+      }
+    };
+
+    window.addEventListener('scroll', checkColorTemperature, { passive: true });
+    checkColorTemperature();
+
+    return () => window.removeEventListener('scroll', checkColorTemperature);
+  }, [data]);
+
+  // 3. Hero Depth: Floating Cards Parallax
+  useEffect(() => {
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (isReduced) return;
+
+    const reelCard = document.querySelector('.mockup-reel-floating');
+    const convBadge = document.querySelector('.floating-conversion-badge');
+    if (!reelCard && !convBadge) return;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > 800) return;
+      if (reelCard) {
+        reelCard.style.transform = `translateY(${y * -0.08}px)`;
+      }
+      if (convBadge) {
+        convBadge.style.transform = `translateY(${y * -0.18}px)`;
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // 4. Proven Results: Per-case sequential reveal & 3 stats count-up
+  useEffect(() => {
+    const caseCards = document.querySelectorAll('.case-card');
+    if (!caseCards.length) return;
+
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (isReduced) {
+      caseCards.forEach(card => {
+        card.querySelector('.case-box-starting')?.classList.add('revealed');
+        card.querySelector('.case-box-strategy')?.classList.add('revealed');
+        card.querySelector('.case-metrics-row')?.classList.add('revealed');
+      });
+      return;
+    }
+
+    const animateNumber = (el, targetStr, duration = 1100) => {
+      if (!el || !targetStr || targetStr === '-') return;
+      const trimmed = String(targetStr).trim();
+      const regex = /^([^0-9.]*)([0-9]+(?:\.[0-9]+)?)(.*)$/;
+      const match = trimmed.match(regex);
+      if (!match) return;
+
+      const prefix = match[1] || '';
+      const targetNum = parseFloat(match[2]);
+      const suffix = match[3] || '';
+      const isFloat = match[2].includes('.');
+
+      const startTime = performance.now();
+      const step = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const currentVal = targetNum * easeOut;
+
+        const formatted = isFloat ? currentVal.toFixed(1) : Math.round(currentVal).toLocaleString();
+        el.textContent = `${prefix}${formatted}${suffix}`;
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          el.textContent = trimmed;
+        }
+      };
+      requestAnimationFrame(step);
+    };
+
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const card = entry.target;
+          obs.unobserve(card);
+
+          // 1. Reveal Starting Point
+          const boxStart = card.querySelector('.case-box-starting');
+          if (boxStart) boxStart.classList.add('revealed');
+
+          // 2. Reveal Phonixe Strategy sliding up ~220ms later
+          setTimeout(() => {
+            const boxStrat = card.querySelector('.case-box-strategy');
+            if (boxStrat) boxStrat.classList.add('revealed');
+          }, 240);
+
+          // 3. Reveal and count up the 3 stats ~460ms later
+          setTimeout(() => {
+            const metricsRow = card.querySelector('.case-metrics-row');
+            if (metricsRow) metricsRow.classList.add('revealed');
+
+            const numberEls = card.querySelectorAll('.metric-number');
+            numberEls.forEach(numEl => {
+              const target = numEl.getAttribute('data-target-metric') || numEl.textContent;
+              animateNumber(numEl, target);
+            });
+          }, 480);
+        }
+      });
+    }, { rootMargin: '0px 0px -40px 0px', threshold: 0.15 });
+
+    caseCards.forEach(c => observer.observe(c));
+
+    return () => observer.disconnect();
+  }, [caseStudies]);
+
+  // 5. Magnetic Primary CTAs (Desktop Only - up to 8px toward cursor)
+  useEffect(() => {
+    const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches && window.innerWidth >= 768;
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!isDesktop || isReduced) return;
+
+    const buttons = document.querySelectorAll('[data-magnetic-cta]');
+    if (!buttons.length) return;
+
+    const handlers = [];
+
+    buttons.forEach((btn) => {
+      const onMouseMove = (e) => {
+        const rect = btn.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dx = e.clientX - centerX;
+        const dy = e.clientY - centerY;
+
+        const maxDist = 8;
+        const moveX = Math.max(-maxDist, Math.min(maxDist, dx * 0.22));
+        const moveY = Math.max(-maxDist, Math.min(maxDist, dy * 0.22));
+
+        gsap.to(btn, {
+          x: moveX,
+          y: moveY,
+          duration: 0.25,
+          ease: 'power2.out',
+          overwrite: 'auto'
+        });
+      };
+
+      const onMouseLeave = () => {
+        gsap.to(btn, {
+          x: 0,
+          y: 0,
+          duration: 0.5,
+          ease: 'elastic.out(1, 0.4)',
+          overwrite: 'auto'
+        });
+      };
+
+      btn.addEventListener('mousemove', onMouseMove);
+      btn.addEventListener('mouseleave', onMouseLeave);
+      handlers.push({ btn, onMouseMove, onMouseLeave });
+    });
+
+    return () => {
+      handlers.forEach(({ btn, onMouseMove, onMouseLeave }) => {
+        btn.removeEventListener('mousemove', onMouseMove);
+        btn.removeEventListener('mouseleave', onMouseLeave);
+        gsap.set(btn, { x: 0, y: 0 });
+      });
+    };
+  }, [data]);
+
+  // 6. Card Spotlight (Desktop Only - soft gold radial glow follows cursor along card borders)
+  useEffect(() => {
+    const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches && window.innerWidth >= 768;
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!isDesktop || isReduced) return;
+
+    const cards = document.querySelectorAll('.card-spotlight');
+    if (!cards.length) return;
+
+    const handlers = [];
+
+    cards.forEach((card) => {
+      const onMouseMove = (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+      };
+
+      card.addEventListener('mousemove', onMouseMove, { passive: true });
+      handlers.push({ card, onMouseMove });
+    });
+
+    return () => {
+      handlers.forEach(({ card, onMouseMove }) => {
+        card.removeEventListener('mousemove', onMouseMove);
+      });
+    };
+  }, [data]);
 
   // Handle Form Submit
   const handleSubmitLead = async (e) => {
@@ -280,7 +575,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
       </div>
 
       {/* Navigation Header */}
-      <header className={`site-header ${isScrolled ? 'scrolled' : ''}`}>
+      <header className={`site-header ${isScrolled ? 'scrolled' : ''} ${isNavHidden ? 'nav-hidden' : ''} ${isPastHero ? 'past-hero' : ''}`}>
         <div className="container nav-container">
           <a href="#" className="brand-logo" onClick={(e) => handleNavClick(e, '#hero')} aria-label="Phonixe Media Home">
             <img src="/assets/logo-horizontal.png" alt="Phonixe Media" className="nav-brand-logo" />
@@ -312,7 +607,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
               </svg>
               <span>WhatsApp</span>
             </a>
-            <button className="btn btn-gold btn-nav" onClick={() => setIsModalOpen(true)}>
+            <button className="btn btn-gold btn-nav" onClick={() => setIsModalOpen(true)} data-magnetic-cta>
               <span>{c.primaryCtaText || 'Book Strategy Call'}</span>
               <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
                 <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -378,7 +673,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="hero-cta-group">
-              <button className="btn btn-gold btn-large shadow-gold-glow" onClick={() => setIsModalOpen(true)}>
+              <button className="btn btn-gold btn-large shadow-gold-glow" onClick={() => setIsModalOpen(true)} data-magnetic-cta>
                 <span>{c.primaryCtaText || 'Book a Free Strategy Call'}</span>
                 <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
                   <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -408,7 +703,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
           </div>
 
           <div className="hero-visual">
-            <div className="growth-dashboard-mockup glass-card">
+            <div className="growth-dashboard-mockup glass-card card-spotlight">
               <div className="mockup-header">
                 <div className="user-profile-badge">
                   <div className="profile-pic-container" data-bird-hover>
@@ -422,7 +717,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
                     <span style={{ fontSize: '0.76rem', color: 'var(--text-dim)' }}>Managed by Phonixe Media</span>
                   </div>
                 </div>
-                <div className="live-growth-pill">
+                <div className="live-growth-pill pill-pulse-onload">
                   <span className="pulse-green"></span>
                   <span>+384% This Month</span>
                 </div>
@@ -758,7 +1053,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <div className="guarantee-icon" data-bird-hover>⚡</div>
             <h4>Spend Just 2–3 Hours Per Month Recording. We Handle The Rest.</h4>
             <p>No more staring at video editing timelines or wrestling with captions at midnight.</p>
-            <button className="btn btn-gold" onClick={() => setIsModalOpen(true)}>
+            <button className="btn btn-gold" onClick={() => setIsModalOpen(true)} data-magnetic-cta>
               Start Your 4-Step System
             </button>
           </div>
@@ -782,11 +1077,11 @@ _Looking forward to discussing our 360° growth strategy!_`;
                 </div>
                 <h3 className="case-client-name">{cs.clientName}</h3>
                 <div className="case-comparison-grid">
-                  <div className="case-box">
+                  <div className="case-box case-box-starting">
                     <span className="box-tag">Starting Point</span>
                     <p>{cs.startingPoint}</p>
                   </div>
-                  <div className="case-box">
+                  <div className="case-box case-box-strategy">
                     <span className="box-tag gold">Phonixe Strategy</span>
                     <p>{cs.strategy}</p>
                   </div>
@@ -799,15 +1094,15 @@ _Looking forward to discussing our 360° growth strategy!_`;
                   return (
                     <div className="case-metrics-row">
                       <div className="metric-item">
-                        <span className="metric-number">{mReach.value}</span>
+                        <span className="metric-number" data-target-metric={mReach.value}>{mReach.value}</span>
                         <span className="metric-title">{mReach.label}</span>
                       </div>
                       <div className="metric-item">
-                        <span className="metric-number">{mLeads.value}</span>
+                        <span className="metric-number" data-target-metric={mLeads.value}>{mLeads.value}</span>
                         <span className="metric-title">{mLeads.label}</span>
                       </div>
                       <div className="metric-item">
-                        <span className="metric-number">{mGrowth.value}</span>
+                        <span className="metric-number" data-target-metric={mGrowth.value}>{mGrowth.value}</span>
                         <span className="metric-title">{mGrowth.label}</span>
                       </div>
                     </div>
@@ -973,7 +1268,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             </div>
 
             <div className="cta-buttons-row">
-              <button className="btn btn-gold btn-xl shadow-gold-glow" onClick={() => setIsModalOpen(true)}>
+              <button className="btn btn-gold btn-xl shadow-gold-glow" onClick={() => setIsModalOpen(true)} data-magnetic-cta>
                 <span>Book Your Free Strategy Call</span>
                 <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
                   <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />

@@ -504,12 +504,13 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     lastPosRef.current = { x: currentX, y: currentY };
   }, [computeMilestones, getAnchorPos]);
 
-  // Canvas ember particle trail
+  // Upward Drifting Gold Ember Particles Canvas (max ~40 desktop, ~12 mobile, pause when offscreen)
   useEffect(() => {
     const canvas = embersCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let animationFrameId;
+    let isPaused = false;
     const particles = [];
 
     const handleResize = () => {
@@ -519,30 +520,106 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     handleResize();
     window.addEventListener('resize', handleResize);
 
+    const onVisibilityChange = () => {
+      isPaused = document.visibilityState === 'hidden';
+      if (!isPaused && !animationFrameId) {
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    // Particle emitter for bird trail
     const addEmber = (x, y) => {
-      if (particles.length > 50) return;
+      const isMobile = window.innerWidth < 768;
+      const maxCount = isMobile ? 12 : 40;
+      if (particles.length >= maxCount + 8) return;
       particles.push({
-        x: x + (Math.random() - 0.5) * 16,
-        y: y + (Math.random() - 0.5) * 16,
-        vx: (Math.random() - 0.5) * 1.5,
-        vy: (Math.random() - 0.5) * 1.5 - 0.6,
+        x: x + (Math.random() - 0.5) * 14,
+        y: y + (Math.random() - 0.5) * 14,
+        vx: (Math.random() - 0.5) * 0.7,
+        vy: -0.6 - Math.random() * 0.7,
         alpha: 0.8 + Math.random() * 0.2,
-        size: 1.5 + Math.random() * 2.5,
-        decay: 0.02 + Math.random() * 0.02
+        size: 1.4 + Math.random() * 2,
+        decay: 0.016 + Math.random() * 0.014,
+        swayOffset: Math.random() * Math.PI * 2,
+        swaySpeed: 0.03
       });
     };
 
     window.__phonixeEmitEmber = addEmber;
 
+    // Ambient spark generator
+    const spawnAmbientSparks = () => {
+      const isMobile = window.innerWidth < 768;
+      const baseMax = isMobile ? 12 : 40;
+
+      // Check proximity to rescue banner or final CTA to increase density
+      let isNearSpecialSection = false;
+      let targetRect = null;
+
+      const rescueBanner = document.querySelector('.problem-transition-banner');
+      if (rescueBanner) {
+        const rect = rescueBanner.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          isNearSpecialSection = true;
+          targetRect = rect;
+        }
+      }
+
+      if (!isNearSpecialSection) {
+        const ctaSection = document.querySelector('.final-cta-section');
+        if (ctaSection) {
+          const rect = ctaSection.getBoundingClientRect();
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            isNearSpecialSection = true;
+            targetRect = rect;
+          }
+        }
+      }
+
+      const targetMax = isNearSpecialSection ? (isMobile ? 16 : 42) : baseMax;
+
+      if (particles.length < targetMax && Math.random() < (isNearSpecialSection ? 0.7 : 0.28)) {
+        let spawnX, spawnY;
+        if (isNearSpecialSection && targetRect) {
+          spawnX = targetRect.left + Math.random() * targetRect.width;
+          spawnY = targetRect.top + Math.random() * targetRect.height;
+        } else {
+          spawnX = Math.random() * canvas.width;
+          spawnY = canvas.height * (0.65 + Math.random() * 0.4);
+        }
+
+        particles.push({
+          x: spawnX,
+          y: spawnY,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: -0.32 - Math.random() * 0.48,
+          alpha: 0.25 + Math.random() * 0.55,
+          size: 1.2 + Math.random() * 1.8,
+          decay: 0.0035 + Math.random() * 0.0035,
+          swayOffset: Math.random() * Math.PI * 2,
+          swaySpeed: 0.015 + Math.random() * 0.015
+        });
+      }
+    };
+
     const render = () => {
+      if (isPaused) {
+        animationFrameId = null;
+        return;
+      }
+
+      spawnAmbientSparks();
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.vx;
+        p.swayOffset += p.swaySpeed;
+        p.x += p.vx + Math.sin(p.swayOffset) * 0.28;
         p.y += p.vy;
         p.alpha -= p.decay;
 
-        if (p.alpha <= 0) {
+        if (p.alpha <= 0 || p.y < -20 || p.x < -20 || p.x > canvas.width + 20) {
           particles.splice(i, 1);
           continue;
         }
@@ -550,16 +627,19 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(229, 169, 60, ${p.alpha})`;
-        ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
-        ctx.shadowBlur = 6;
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.7)';
+        ctx.shadowBlur = 5;
         ctx.fill();
       }
+
       animationFrameId = requestAnimationFrame(render);
     };
-    render();
+
+    animationFrameId = requestAnimationFrame(render);
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       cancelAnimationFrame(animationFrameId);
       delete window.__phonixeEmitEmber;
     };

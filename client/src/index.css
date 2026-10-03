@@ -176,7 +176,7 @@ button {
   margin: 0 auto;
   padding: 0 24px;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .text-center { text-align: center; }
@@ -417,14 +417,28 @@ button {
   z-index: 100;
   background: rgba(12, 13, 17, 0.85);
   backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--border-subtle);
-  transition: all 0.3s ease;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform;
 }
 
 .site-header.scrolled {
   background: rgba(9, 10, 13, 0.95);
   border-bottom-color: rgba(229, 169, 60, 0.25);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.site-header.nav-hidden {
+  transform: translateY(-100%);
+}
+
+.site-header.past-hero {
+  background: rgba(9, 10, 13, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(229, 169, 60, 0.38); /* delicate gold hairline */
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65), 0 0 20px rgba(229, 169, 60, 0.08);
 }
 
 .nav-container {
@@ -2583,7 +2597,7 @@ button {
   -webkit-user-drag: none;
 }
 
-/* Background Embers Trail Canvas */
+/* Background Embers Trail Canvas - sits behind content */
 .phoenix-embers-canvas {
   position: fixed;
   top: 0;
@@ -2591,7 +2605,7 @@ button {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 84;
+  z-index: 1; /* Layered behind content cards and text (z-index 2) */
 }
 
 /* Thin Gold Scroll-Progress Line at Very Top of Viewport */
@@ -2633,7 +2647,167 @@ button {
 
 /* Ambient Radial Glow Parallax */
 .ambient-glow {
+  will-change: transform, opacity, filter;
+  transition: filter 0.8s ease, opacity 0.8s ease;
+}
+
+/* 1. Color-Temperature Story */
+.ambient-glow.ambient-muted {
+  filter: blur(140px) saturate(0.12) brightness(0.48) !important;
+  opacity: 0.04 !important;
+}
+
+.ambient-glow.ambient-ignited {
+  filter: blur(140px) saturate(1.35) brightness(1.2) !important;
+  opacity: 0.20 !important;
+}
+
+.phoenix-bird-wrapper {
+  transition: filter 0.7s ease;
+}
+
+.phoenix-bird-wrapper.bird-muted {
+  filter: saturate(0.2) brightness(0.65) drop-shadow(0 2px 10px rgba(80, 90, 110, 0.35));
+}
+
+.phoenix-bird-wrapper.bird-ignited {
+  animation: bird-gold-ignite 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes bird-gold-ignite {
+  0% {
+    filter: drop-shadow(0 0 28px rgba(255, 215, 0, 1)) drop-shadow(0 0 60px rgba(229, 169, 60, 0.85)) brightness(1.45) saturate(1.6);
+  }
+  100% {
+    filter: drop-shadow(0 4px 18px rgba(229, 169, 60, 0.45));
+  }
+}
+
+.problem-card {
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease, transform 0.6s ease;
+}
+
+.problem-card.problem-faded {
+  opacity: 0.42;
+  filter: grayscale(0.85);
+  transform: scale(0.985);
+}
+
+.problem-transition-banner.ignite-gold-pulse {
+  animation: banner-rescue-pulse 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes banner-rescue-pulse {
+  0% {
+    box-shadow: 0 0 0 rgba(229, 169, 60, 0);
+  }
+  35% {
+    box-shadow: 0 0 50px rgba(229, 169, 60, 0.75), 0 0 90px rgba(255, 215, 0, 0.35);
+  }
+  100% {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45), 0 0 25px rgba(229, 169, 60, 0.18);
+  }
+}
+
+/* 3. Hero Depth & Pill Pulse */
+.live-growth-pill.pill-pulse-onload {
+  animation: pill-load-pulse 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+}
+
+@keyframes pill-load-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: none;
+  }
+  40% {
+    transform: scale(1.12);
+    box-shadow: 0 0 22px rgba(37, 211, 102, 0.8), 0 0 40px rgba(37, 211, 102, 0.4);
+    background: rgba(37, 211, 102, 0.25);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: none;
+    background: rgba(37, 211, 102, 0.12);
+  }
+}
+
+.mockup-reel-floating,
+.floating-conversion-badge {
   will-change: transform;
+  transition: transform 0.1s ease-out;
+}
+
+/* 4. Proven Results: Per-case sequential reveals */
+.case-box-starting {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+.case-box-starting.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.case-box-strategy {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.22s, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.22s;
+  will-change: transform, opacity;
+}
+.case-box-strategy.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.case-metrics-row .metric-item {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.45s ease 0.44s, transform 0.45s ease 0.44s;
+  will-change: transform, opacity;
+}
+.case-metrics-row.revealed .metric-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 6. Magnetic Primary CTAs */
+[data-magnetic-cta] {
+  will-change: transform;
+}
+
+/* 7. Desktop Card Spotlight Border Glow */
+@media (hover: hover) and (min-width: 768px) {
+  .card-spotlight,
+  .glass-card {
+    position: relative;
+  }
+  .card-spotlight::after,
+  .glass-card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1.2px;
+    background: radial-gradient(
+      280px circle at var(--mouse-x, -500px) var(--mouse-y, -500px),
+      rgba(229, 169, 60, 0.7) 0%,
+      rgba(255, 215, 0, 0.25) 35%,
+      transparent 70%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 2;
+  }
+  .card-spotlight:hover::after,
+  .glass-card:hover::after {
+    opacity: 1;
+  }
 }
 
 /* Smooth Mask-Reveal Text Wrappers */
@@ -2646,5 +2820,36 @@ button {
   display: block;
   will-change: transform, opacity;
 }
+
+/* Prefers-reduced-motion Overrides for Additional Motion */
+@media (prefers-reduced-motion: reduce) {
+  .site-header {
+    transition: none !important;
+    transform: none !important;
+  }
+  .case-box-starting,
+  .case-box-strategy,
+  .case-metrics-row .metric-item {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .live-growth-pill.pill-pulse-onload {
+    animation: none !important;
+  }
+  .card-spotlight::after {
+    display: none !important;
+  }
+  .problem-card.problem-faded {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+  }
+  .problem-transition-banner.ignite-gold-pulse,
+  .phoenix-bird-wrapper.bird-ignited {
+    animation: none !important;
+  }
+}
+
 
 
