@@ -1586,11 +1586,6 @@ _Looking forward to discussing our 360° growth strategy!_`;
           </div>
 
           <div className="process-timeline">
-            {/* Scrubbed Connector Line */}
-            <div className="process-connector-track" aria-hidden="true">
-              <div className="process-connector-fill" />
-            </div>
-
             <div className="process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
               <div className="card-light-sweep" aria-hidden="true" />
               <div className="step-number-badge" data-bird-hover>01</div>
