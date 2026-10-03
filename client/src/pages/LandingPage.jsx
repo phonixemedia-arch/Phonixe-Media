@@ -39,6 +39,17 @@ export default function LandingPage({ navigateTo }) {
   const [isNavHidden, setIsNavHidden] = useState(false);
   const [isPastHero, setIsPastHero] = useState(false);
 
+  const c = data?.content || {};
+  const cleanWa = (c.whatsappNumber || '+91 8799690069').replace(/[^0-9]/g, '');
+  const contactEmail = c.email || 'phonixemedia@gmail.com';
+  const igHandle = c.instagramHandle || '@phonixe.media';
+  const igUrl = c.instagramUrl || 'https://www.instagram.com/phonixe.media/';
+  const stats = data?.stats || [];
+  const services = data?.services || [];
+  const caseStudies = data?.caseStudies || [];
+  const testimonials = data?.testimonials || [];
+  const faqs = data?.faqs || [];
+
   const lenisRef = useRef(null);
   const progressBarRef = useRef(null);
   const chartPathRef = useRef(null);
@@ -412,7 +423,7 @@ export default function LandingPage({ navigateTo }) {
     caseCards.forEach(c => observer.observe(c));
 
     return () => observer.disconnect();
-  }, [caseStudies]);
+  }, [data]);
 
   // 5. Magnetic Primary CTAs (Desktop Only - up to 8px toward cursor)
   useEffect(() => {
@@ -538,17 +549,6 @@ _Looking forward to discussing our 360° growth strategy!_`;
       setSubmitting(false);
     }
   };
-
-  const c = data?.content || {};
-  const cleanWa = (c.whatsappNumber || '+91 8799690069').replace(/[^0-9]/g, '');
-  const contactEmail = c.email || 'phonixemedia@gmail.com';
-  const igHandle = c.instagramHandle || '@phonixe.media';
-  const igUrl = c.instagramUrl || 'https://www.instagram.com/phonixe.media/';
-  const stats = data?.stats || [];
-  const services = data?.services || [];
-  const caseStudies = data?.caseStudies || [];
-  const testimonials = data?.testimonials || [];
-  const faqs = data?.faqs || [];
 
   return (
     <div className="landing-page-root">
