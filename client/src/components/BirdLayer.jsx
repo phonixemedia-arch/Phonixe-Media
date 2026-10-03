@@ -420,8 +420,6 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.innerWidth < 768;
 
-    refreshAnchorCoords();
-
     // Quick setters for smooth responsive positioning
     quickX.current = gsap.quickTo(birdEl, 'x', { duration: 0.5, ease: 'power3.out' });
     quickY.current = gsap.quickTo(birdEl, 'y', { duration: 0.5, ease: 'power3.out' });
