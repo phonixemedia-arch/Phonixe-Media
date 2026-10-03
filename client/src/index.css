@@ -2037,6 +2037,31 @@ button {
   transform: translateY(0) !important;
 }
 
+/* Staggered card reveals when scrolling */
+.stats-grid .stat-card:nth-child(1) { transition-delay: 0.04s; }
+.stats-grid .stat-card:nth-child(2) { transition-delay: 0.12s; }
+.stats-grid .stat-card:nth-child(3) { transition-delay: 0.20s; }
+.stats-grid .stat-card:nth-child(4) { transition-delay: 0.28s; }
+
+.services-grid .service-card:nth-child(1) { transition-delay: 0.04s; }
+.services-grid .service-card:nth-child(2) { transition-delay: 0.12s; }
+.services-grid .service-card:nth-child(3) { transition-delay: 0.20s; }
+.services-grid .service-card:nth-child(4) { transition-delay: 0.28s; }
+
+.case-studies-grid .case-card:nth-child(1) { transition-delay: 0.04s; }
+.case-studies-grid .case-card:nth-child(2) { transition-delay: 0.12s; }
+.case-studies-grid .case-card:nth-child(3) { transition-delay: 0.20s; }
+
+.testimonials-grid .testimonial-card:nth-child(1) { transition-delay: 0.04s; }
+.testimonials-grid .testimonial-card:nth-child(2) { transition-delay: 0.12s; }
+.testimonials-grid .testimonial-card:nth-child(3) { transition-delay: 0.20s; }
+
+.niche-cards-grid .niche-card:nth-child(odd) { transition-delay: 0.05s; }
+.niche-cards-grid .niche-card:nth-child(even) { transition-delay: 0.14s; }
+
+.problems-grid .problem-card:nth-child(odd) { transition-delay: 0.05s; }
+.problems-grid .problem-card:nth-child(even) { transition-delay: 0.14s; }
+
 /* Responsive Media Queries */
 /* ==========================================================================
    RESPONSIVE MEDIA QUERIES (Desktop, Laptop, Tablet, Mobile)

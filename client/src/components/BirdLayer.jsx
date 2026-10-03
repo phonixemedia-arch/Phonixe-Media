@@ -283,46 +283,81 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
   const quickRotation = useRef(null);
   const quickScaleX = useRef(null);
 
-  // Compute real-time element viewport coordinates
-  const getAnchorViewportPos = useCallback((anchor) => {
-    if (!anchor) return null;
-    const el = document.querySelector(anchor.selector);
-    if (!el) return null;
-    const rect = el.getBoundingClientRect();
+  // Anchor milestones ref
+  const anchorDataRef = useRef([]);
 
+  // Compute live element positions relative to viewport
+  const getAnchorPos = useCallback((item) => {
+    if (!item || !item.element) return null;
+    const rect = item.element.getBoundingClientRect();
     let x = rect.left;
     let y = rect.top;
 
-    if (anchor.side === 'top-left') {
-      x += (anchor.offsetX || 0);
-      y += (anchor.offsetY || 0);
-    } else if (anchor.side === 'top-right') {
-      x += rect.width + (anchor.offsetX || 0);
-      y += (anchor.offsetY || 0);
-    } else if (anchor.side === 'center') {
-      x += rect.width / 2 + (anchor.offsetX || 0);
-      y += rect.height / 2 + (anchor.offsetY || 0);
-    } else if (anchor.side === 'right') {
-      x += rect.width + (anchor.offsetX || 0);
-      y += rect.height / 2 + (anchor.offsetY || 0);
-    } else if (anchor.side === 'left') {
-      x += (anchor.offsetX || 0);
-      y += rect.height / 2 + (anchor.offsetY || 0);
+    if (item.side === 'top-left') {
+      x += (item.offsetX || 0);
+      y += (item.offsetY || 0);
+    } else if (item.side === 'top-right') {
+      x += rect.width + (item.offsetX || 0);
+      y += (item.offsetY || 0);
+    } else if (item.side === 'center') {
+      x += rect.width / 2 + (item.offsetX || 0);
+      y += rect.height / 2 + (item.offsetY || 0);
+    } else if (item.side === 'right') {
+      x += rect.width + (item.offsetX || 0);
+      y += rect.height / 2 + (item.offsetY || 0);
+    } else if (item.side === 'left') {
+      x += (item.offsetX || 0);
+      y += rect.height / 2 + (item.offsetY || 0);
     } else {
-      x += rect.width / 2 + (anchor.offsetX || 0);
-      y += (anchor.offsetY || 0);
+      x += rect.width / 2 + (item.offsetX || 0);
+      y += (item.offsetY || 0);
     }
 
     return {
       x,
       y,
-      scale: anchor.scale || 0.8,
-      rotation: anchor.rotation || 0,
-      glowPulse: !!anchor.glowPulse,
-      fade: !!anchor.fade,
-      element: el
+      scale: item.scale || 0.8,
+      rotation: item.rotation || 0,
+      fade: !!item.fade
     };
   }, []);
+
+  // Compute scroll target milestones for each anchor in page order
+  const computeMilestones = useCallback(() => {
+    const viewportH = window.innerHeight;
+    const scrollY = window.scrollY;
+
+    const list = [];
+    anchors.forEach((anchor) => {
+      const el = document.querySelector(anchor.selector);
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const pageTop = rect.top + scrollY;
+
+      // Desired scroll position where this element is centered comfortably
+      let targetScroll = pageTop - viewportH * 0.35 + (anchor.offsetY || 0);
+      if (targetScroll < 0) targetScroll = 0;
+
+      list.push({
+        ...anchor,
+        element: el,
+        pageTop,
+        targetScroll
+      });
+    });
+
+    list.sort((a, b) => a.pageTop - b.pageTop);
+
+    // Enforce smooth spacing between consecutive milestones
+    for (let i = 1; i < list.length; i++) {
+      if (list[i].targetScroll <= list[i - 1].targetScroll + 60) {
+        list[i].targetScroll = list[i - 1].targetScroll + 120;
+      }
+    }
+
+    anchorDataRef.current = list;
+    return list;
+  }, [anchors]);
 
   // Gentle idle float while perched
   const startIdleFloat = useCallback(() => {
@@ -348,6 +383,124 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       gsap.to(birdImgRef.current, { y: 0, duration: 0.3, ease: 'power2.out' });
     }
   }, []);
+
+  // Update bird position based on exact scroll offset
+  const updateBirdOnScroll = useCallback((currentScroll) => {
+    if (isHoveredRef.current) return;
+    const birdEl = birdRef.current;
+    const birdImg = birdImgRef.current;
+    if (!birdEl || !birdImg) return;
+
+    let list = anchorDataRef.current;
+    if (!list || list.length === 0) {
+      list = computeMilestones();
+    }
+    if (!list || list.length === 0) return;
+
+    const isMobile = window.innerWidth < 768;
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+
+    // Find which anchor segment corresponds to current scroll
+    let i = 0;
+    while (i < list.length - 1 && currentScroll >= list[i + 1].targetScroll) {
+      i++;
+    }
+
+    currentAnchorIndexRef.current = i;
+
+    const a1 = list[i];
+    const a2 = list[Math.min(i + 1, list.length - 1)];
+
+    let t = 0;
+    if (i < list.length - 1) {
+      const range = a2.targetScroll - a1.targetScroll;
+      t = range > 0 ? (currentScroll - a1.targetScroll) / range : 0;
+      t = Math.max(0, Math.min(1, t));
+    }
+
+    const p1 = getAnchorPos(a1);
+    const p2 = getAnchorPos(a2);
+    if (!p1 || !p2) return;
+
+    // Clamp anchor targets into viewport frame so they never start/end off-screen
+    const p1Clamped = {
+      x: Math.max(25, Math.min(viewportW - 85, p1.x)),
+      y: Math.max(76, Math.min(viewportH - 85, p1.y))
+    };
+    const p2Clamped = {
+      x: Math.max(25, Math.min(viewportW - 85, p2.x)),
+      y: Math.max(76, Math.min(viewportH - 85, p2.y))
+    };
+
+    let currentX, currentY;
+    let flightT = 0;
+
+    if (t <= 0.15) {
+      // Perched on Anchor 1
+      flightT = 0;
+      currentX = p1Clamped.x;
+      currentY = p1Clamped.y;
+    } else if (t >= 0.85) {
+      // Perched on Anchor 2
+      flightT = 1;
+      currentX = p2Clamped.x;
+      currentY = p2Clamped.y;
+    } else {
+      // In flight along arched Bézier curve
+      flightT = (t - 0.15) / 0.7;
+      const midX = (p1Clamped.x + p2Clamped.x) / 2;
+      const arcLift = -Math.min(130, Math.abs(p2Clamped.x - p1Clamped.x) * 0.35 + 40);
+      const midY = Math.min(p1Clamped.y, p2Clamped.y) + arcLift;
+
+      currentX = (1 - flightT) * (1 - flightT) * p1Clamped.x + 2 * (1 - flightT) * flightT * midX + flightT * flightT * p2Clamped.x;
+      currentY = (1 - flightT) * (1 - flightT) * p1Clamped.y + 2 * (1 - flightT) * flightT * midY + flightT * flightT * p2Clamped.y;
+    }
+
+    // Bulletproof viewport clamping: bird is ALWAYS visible on screen
+    currentX = Math.max(25, Math.min(viewportW - 85, currentX));
+    currentY = Math.max(76, Math.min(viewportH - 85, currentY));
+
+    // Direction and flight trajectory angle
+    const dx = currentX - (lastPosRef.current.x || currentX);
+    const dy = currentY - (lastPosRef.current.y || currentY);
+
+    let flightAngle = 0;
+    if (Math.hypot(dx, dy) > 1.5) {
+      flightAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+      flightAngle = Math.max(-35, Math.min(35, flightAngle * 0.35));
+    }
+
+    const facingDirection = dx < -1.5 ? -1 : dx > 1.5 ? 1 : (p2Clamped.x < p1Clamped.x ? -1 : 1);
+
+    // Scale and opacity
+    let targetScale = (1 - flightT) * p1.scale + flightT * p2.scale;
+    if (isMobile) targetScale *= 0.65;
+
+    let targetOpacity = 1;
+    if (p2.fade && flightT > 0.6) {
+      targetOpacity = 1 - (flightT - 0.6) / 0.4;
+    }
+
+    gsap.set(birdEl, {
+      x: currentX,
+      y: currentY,
+      scale: targetScale,
+      rotation: (1 - flightT) * p1.rotation + flightT * p2.rotation + flightAngle,
+      opacity: targetOpacity
+    });
+
+    if (quickScaleX.current) {
+      quickScaleX.current(facingDirection);
+    }
+
+    // Emit ember particles
+    if (window.__phonixeEmitEmber && Math.hypot(dx, dy) > 3 && Math.random() < 0.45) {
+      window.__phonixeEmitEmber(currentX + 35, currentY + 30);
+    }
+
+    lastPosRef.current = { x: currentX, y: currentY };
+  }, [computeMilestones, getAnchorPos]);
 
   // Canvas ember particle trail
   useEffect(() => {
@@ -427,103 +580,33 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     quickRotation.current = gsap.quickTo(birdEl, 'rotation', { duration: 0.5, ease: 'power3.out' });
     quickScaleX.current = gsap.quickTo(birdImg, 'scaleX', { duration: 0.3, ease: 'power2.out' });
 
-    // Initial position on Hero
-    const heroAnchor = getAnchorViewportPos(anchors[0]);
-    if (heroAnchor) {
-      gsap.set(birdEl, {
-        x: heroAnchor.x,
-        y: heroAnchor.y,
-        scale: isMobile ? heroAnchor.scale * 0.65 : heroAnchor.scale,
-        rotation: heroAnchor.rotation,
-        opacity: 1
-      });
-      lastPosRef.current = { x: heroAnchor.x, y: heroAnchor.y };
-      startIdleFloat();
-    }
+    // Initialize milestones and position
+    computeMilestones();
+    updateBirdOnScroll(window.scrollY);
+    startIdleFloat();
 
     if (prefersReducedMotion) {
-      // Static bird in hero, no flights or pinning
       return;
     }
 
-    // SCROLL-DRIVEN FLIGHT TIMELINE
-    // Scrub bird through anchors as user scrolls the page
+    // SCROLL-DRIVEN FLIGHT LISTENER
+    const handleScroll = () => {
+      updateBirdOnScroll(window.scrollY);
+    };
+
+    window.__phonixeScrollCallback = (scrollY) => {
+      updateBirdOnScroll(scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
     const flightTrigger = ScrollTrigger.create({
       trigger: '.landing-page-root',
       start: 'top top',
       end: 'bottom bottom',
-      scrub: 1.2,
-      onUpdate: (self) => {
-        if (isHoveredRef.current) return; // Allow mouse hover to override scroll position temporarily
-
-        const progress = self.progress;
-        const totalAnchors = anchors.length;
-        if (totalAnchors < 2) return;
-
-        // Determine current pair of anchors based on progress
-        const segmentFloat = progress * (totalAnchors - 1);
-        const currentIndex = Math.min(Math.floor(segmentFloat), totalAnchors - 2);
-        const segmentProgress = segmentFloat - currentIndex;
-
-        currentAnchorIndexRef.current = currentIndex;
-
-        const v1 = getAnchorViewportPos(anchors[currentIndex]);
-        const v2 = getAnchorViewportPos(anchors[currentIndex + 1]);
-
-        if (!v1 || !v2) return;
-
-        // Quadratic curve in viewport space for arched flight
-        const t = segmentProgress;
-        // Arc peak: lift bird up during flight between sections
-        const arcLift = -Math.min(100, Math.abs(v2.x - v1.x) * 0.35 + 30);
-        const midX = (v1.x + v2.x) / 2;
-        const midY = (v1.y + v2.y) / 2 + arcLift;
-
-        // Bézier interpolation
-        const currentX = (1 - t) * (1 - t) * v1.x + 2 * (1 - t) * t * midX + t * t * v2.x;
-        const currentY = (1 - t) * (1 - t) * v1.y + 2 * (1 - t) * t * midY + t * t * v2.y;
-
-        // Compute angle of trajectory
-        const dx = currentX - lastPosRef.current.x;
-        const dy = currentY - lastPosRef.current.y;
-        let flightAngle = 0;
-        if (Math.hypot(dx, dy) > 1.5) {
-          flightAngle = Math.atan2(dy, dx) * (180 / Math.PI);
-          // Clamp angle for natural flight
-          flightAngle = Math.max(-45, Math.min(45, flightAngle * 0.4));
-        }
-
-        // Horizontal flip: face right when moving right (dx >= 0), face left when moving left (dx < 0)
-        const facingDirection = dx < -1 ? -1 : dx > 1 ? 1 : (v2.x < v1.x ? -1 : 1);
-
-        // Scale and opacity
-        let targetScale = (1 - t) * v1.scale + t * v2.scale;
-        if (isMobile) targetScale *= 0.65;
-
-        let targetOpacity = 1;
-        if (v2.fade && t > 0.6) {
-          targetOpacity = 1 - (t - 0.6) / 0.4;
-        }
-
-        // Apply transforms via GSAP
-        gsap.set(birdEl, {
-          x: currentX,
-          y: currentY,
-          scale: targetScale,
-          rotation: (1 - t) * v1.rotation + t * v2.rotation + flightAngle,
-          opacity: targetOpacity
-        });
-
-        if (quickScaleX.current) {
-          quickScaleX.current(facingDirection);
-        }
-
-        // Emit ember particles during flight
-        if (window.__phonixeEmitEmber && Math.random() < 0.4) {
-          window.__phonixeEmitEmber(currentX + 35, currentY + 30);
-        }
-
-        lastPosRef.current = { x: currentX, y: currentY };
+      scrub: true,
+      onUpdate: () => {
+        updateBirdOnScroll(window.scrollY);
       }
     });
 
@@ -555,30 +638,33 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       }
     }
 
-    // Refresh triggers on resize, fonts loaded, orientation changes
+    // Refresh milestones on resize or orientation change
     const onResize = () => {
+      computeMilestones();
+      updateBirdOnScroll(window.scrollY);
       ScrollTrigger.refresh();
     };
 
     const initTimer = setTimeout(() => {
-      const heroPos = getAnchorViewportPos(anchors[0]);
-      if (heroPos) {
-        gsap.set(birdEl, { x: heroPos.x, y: heroPos.y, opacity: 1 });
-        lastPosRef.current = { x: heroPos.x, y: heroPos.y };
-      }
+      computeMilestones();
+      updateBirdOnScroll(window.scrollY);
       ScrollTrigger.refresh();
-    }, 200);
+    }, 250);
 
     window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+
     return () => {
       clearTimeout(initTimer);
+      window.removeEventListener('scroll', handleScroll);
+      delete window.__phonixeScrollCallback;
       flightTrigger.kill();
       if (processPinTrigger) processPinTrigger.kill();
       window.removeEventListener('resize', onResize);
       window.removeEventListener('orientationchange', onResize);
       stopIdleFloat();
     };
-  }, [anchors, getAnchorViewportPos, startIdleFloat, stopIdleFloat]);
+  }, [computeMilestones, updateBirdOnScroll, startIdleFloat, stopIdleFloat]);
 
   // DESKTOP ICON HOVER INTERACTION
   // Add data-bird-hover to any icon element: bird swoops over, perches at ~0.35 scale, gold ring glows
@@ -602,24 +688,21 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       isHoveredRef.current = true;
       stopIdleFloat();
 
-      // Add target gold glow ring
       target.classList.add('bird-perched-target');
 
       const rect = target.getBoundingClientRect();
-      const targetX = rect.left + rect.width / 2 - 25; // center bird over icon
-      const targetY = rect.top - 20; // sit just slightly perched atop icon
+      const targetX = rect.left + rect.width / 2 - 25;
+      const targetY = rect.top - 20;
 
-      // Direction toward icon
       const dx = targetX - (lastPosRef.current.x || targetX);
       const faceDir = dx < 0 ? -1 : 1;
 
-      // Flight to icon
       gsap.to(birdEl, {
         x: targetX,
         y: targetY,
         scale: 0.35,
         rotation: 0,
-        duration: 0.5,
+        duration: 0.45,
         ease: 'power3.out',
         overwrite: 'auto',
         onComplete: () => {
@@ -641,36 +724,13 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
 
       target.classList.remove('bird-perched-target');
 
-      // 150ms debounce before returning to scroll anchor
       hoverTimeoutRef.current = setTimeout(() => {
         isHoveredRef.current = false;
-
-        // Return to active scroll anchor
-        const currentIndex = currentAnchorIndexRef.current || 0;
-        const anchor = getAnchorViewportPos(anchors[currentIndex]);
-
-        if (anchor) {
-          const returnX = anchor.x;
-          const returnY = anchor.y;
-
-          gsap.to(birdEl, {
-            x: returnX,
-            y: returnY,
-            scale: anchor.scale || 0.8,
-            rotation: anchor.rotation || 0,
-            duration: 0.55,
-            ease: 'power3.out',
-            overwrite: 'auto',
-            onComplete: () => {
-              lastPosRef.current = { x: returnX, y: returnY };
-              startIdleFloat();
-            }
-          });
-        }
+        updateBirdOnScroll(window.scrollY);
+        startIdleFloat();
       }, 150);
     };
 
-    // Attach listeners with event delegation
     document.addEventListener('mouseover', handleMouseEnter);
     document.addEventListener('mouseout', handleMouseLeave);
 
@@ -679,7 +739,7 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       document.removeEventListener('mouseout', handleMouseLeave);
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     };
-  }, [anchors, getAnchorViewportPos, startIdleFloat, stopIdleFloat]);
+  }, [updateBirdOnScroll, startIdleFloat, stopIdleFloat]);
 
   // Small bounce effect when FAQ item opens
   useEffect(() => {

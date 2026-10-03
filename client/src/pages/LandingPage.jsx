@@ -65,8 +65,13 @@ export default function LandingPage({ navigateTo }) {
     });
     lenisRef.current = lenis;
 
-    // Sync Lenis scroll with GSAP ScrollTrigger
-    lenis.on('scroll', ScrollTrigger.update);
+    // Sync Lenis scroll with GSAP ScrollTrigger and BirdLayer
+    lenis.on('scroll', (e) => {
+      ScrollTrigger.update();
+      if (typeof window.__phonixeScrollCallback === 'function') {
+        window.__phonixeScrollCallback(e.scroll);
+      }
+    });
     const tickerCallback = (time) => lenis.raf(time * 1000);
     gsap.ticker.add(tickerCallback);
     gsap.ticker.lagSmoothing(0);
@@ -147,14 +152,13 @@ export default function LandingPage({ navigateTo }) {
     return () => ctx.revert();
   }, []);
 
-  // 4. Scroll Reveal Animations with IntersectionObserver & Auto-reveal fallback
+  // 4. Scroll Reveal Animations with IntersectionObserver
   useEffect(() => {
     const rootEl = document.querySelector('.landing-page-root');
     if (rootEl) rootEl.classList.add('js-reveal-active');
 
     const revealEls = document.querySelectorAll('.reveal');
     
-    // Immediate activation for elements in or near viewport
     if ('IntersectionObserver' in window) {
       const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
@@ -163,19 +167,12 @@ export default function LandingPage({ navigateTo }) {
             obs.unobserve(entry.target);
           }
         });
-      }, { rootMargin: '120px 0px 120px 0px', threshold: 0.05 });
+      }, { rootMargin: '0px 0px -30px 0px', threshold: 0.05 });
 
       revealEls.forEach(el => observer.observe(el));
 
-      // Auto-reveal fallback: ensures all elements become active gracefully
-      const timer = setTimeout(() => {
-        revealEls.forEach(el => el.classList.add('active'));
-        ScrollTrigger.refresh();
-      }, 400);
-
       return () => {
         observer.disconnect();
-        clearTimeout(timer);
       };
     } else {
       revealEls.forEach(el => el.classList.add('active'));
