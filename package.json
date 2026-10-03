@@ -4,6 +4,7 @@
   "description": "Phonixe Media MERN Application - Landing Page & Admin CMS",
   "main": "api/index.js",
   "scripts": {
+    "dev": "npm run dev --prefix client",
     "postinstall": "cd client && npm install",
     "install:all": "npm install && npm install --prefix client && npm install --prefix server",
     "dev:server": "npm run dev --prefix server",
