@@ -1365,11 +1365,11 @@ _Looking forward to discussing our 360° growth strategy!_`;
               <div className="mockup-header">
                 <div className="user-profile-badge">
                   <div className="profile-pic-container" data-bird-hover>
-                    <img src="/assets/phoenix-badge.png" alt="Phonixe Logo Badge" className="mini-gold-phoenix" />
+                    <img src="/assets/ruchikaa-profile.jpg" alt="soultalkswith_ruchikaa" className="mini-gold-phoenix" />
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>Elite Coach Brand</span>
+                      <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>soultalkswith_ruchikaa</span>
                       <span className="verified-badge">✓</span>
                     </div>
                     <span style={{ fontSize: '0.76rem', color: 'var(--text-dim)' }}>Managed by Phonixe Media</span>
@@ -1384,12 +1384,12 @@ _Looking forward to discussing our 360° growth strategy!_`;
               <div className="mockup-stats-grid">
                 <div className="mockup-stat-box">
                   <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Organic Accounts Reached</span>
-                  <div className="stat-box-val">284,920</div>
+                  <div className="stat-box-val">1.3Cr</div>
                   <span className="stat-box-trend positive">↑ 412.8% vs last month</span>
                 </div>
                 <div className="mockup-stat-box">
                   <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Discovery Call DMs</span>
-                  <div className="stat-box-val">68 Leads</div>
+                  <div className="stat-box-val">79 Leads</div>
                   <span className="stat-box-trend positive">↑ High-Intent Inquiries</span>
                 </div>
               </div>
