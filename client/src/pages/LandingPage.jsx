@@ -2167,7 +2167,12 @@ _Looking forward to discussing our 360° growth strategy!_`;
       {isModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
           <div className="modal-dialog glass-card" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)}>&times;</button>
+            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)} aria-label="Close modal">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
             
             {!modalSuccess ? (
               <>
@@ -2225,10 +2230,10 @@ _Looking forward to discussing our 360° growth strategy!_`;
                       onChange={(e) => setFormState({ ...formState, niche: e.target.value })}
                     >
                       <option value="" disabled>Select your specialization</option>
-                      <option value="Tarot Reader & Intuitive">Tarot Reader & Intuitive</option>
-                      <option value="Numerologist & Astro Consultant">Numerologist & Astro Consultant</option>
-                      <option value="Vastu & Energy Architect">Vastu & Energy Architect</option>
-                      <option value="Relationship & Marriage Coach">Relationship & Marriage Coach</option>
+                      <option value="Tarot Readers">Tarot Readers</option>
+                      <option value="Numerologists">Numerologists</option>
+                      <option value="Vastu Experts">Vastu Experts</option>
+                      <option value="Relationship Coaches">Relationship Coaches</option>
                       <option value="Spiritual & Healing Mentor">Spiritual & Healing Mentor</option>
                       <option value="Akashic Record Reader">Akashic Record Reader</option>
                       <option value="Life & Mindset Coach">Life & Mindset Coach</option>
