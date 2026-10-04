@@ -1063,7 +1063,17 @@ button {
   flex-direction: column;
   height: 100%;
 }
-.niche-card-icon { font-size: 2.4rem; margin-bottom: 20px; display: inline-block; line-height: 1; }
+.niche-card-icon {
+  font-size: 2.4rem;
+  margin-bottom: 20px;
+  display: inline-flex;
+  width: fit-content;
+  max-width: fit-content;
+  align-self: flex-start;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
 .niche-card h3 {
   font-size: 1.25rem;
   font-weight: 700;
@@ -1103,7 +1113,17 @@ button {
   display: flex;
   flex-direction: column;
 }
-.problem-icon { font-size: 1.8rem; margin-bottom: 18px; line-height: 1; }
+.problem-icon {
+  font-size: 1.8rem;
+  margin-bottom: 18px;
+  line-height: 1;
+  display: inline-flex;
+  width: fit-content;
+  max-width: fit-content;
+  align-self: flex-start;
+  align-items: center;
+  justify-content: center;
+}
 .problem-card h3 {
   font-size: 1.22rem;
   font-weight: 700;
@@ -1221,6 +1241,12 @@ button {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 16px;
+  display: inline-flex;
+  width: fit-content;
+  max-width: fit-content;
+  align-self: flex-start;
+  align-items: center;
+  justify-content: center;
 }
 .step-tag {
   display: block;
@@ -1276,6 +1302,12 @@ button {
   font-size: 2.2rem;
   margin-bottom: 14px;
   line-height: 1;
+  display: inline-flex;
+  width: fit-content;
+  max-width: fit-content;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
 }
 .process-guarantee-box h4 {
   font-size: 1.35rem;
@@ -2857,15 +2889,16 @@ button {
   pointer-events: none;
 }
 
-/* Icon Hover Glow Rings for [data-bird-hover] */
+/* Icon & Card Hover for [data-bird-hover] */
 [data-bird-hover] {
-  transition: box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
+  box-shadow: none !important;
 }
 
-[data-bird-hover].bird-perched-target {
-  box-shadow: 0 0 22px rgba(229, 169, 60, 0.95), 0 0 45px rgba(245, 158, 11, 0.5) !important;
-  transform: scale(1.12);
+[data-bird-hover].bird-perched-target,
+.bird-perched-target {
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 /* Process Step Glow when Bird Lands during Scroll Pinning */

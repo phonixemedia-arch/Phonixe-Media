@@ -667,10 +667,18 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
 
     // SCROLL-DRIVEN FLIGHT LISTENER
     const handleScroll = () => {
+      if (isHoveredRef.current) {
+        isHoveredRef.current = false;
+        document.querySelectorAll('.bird-perched-target').forEach(el => el.classList.remove('bird-perched-target'));
+      }
       updateBirdOnScroll(window.scrollY);
     };
 
     window.__phonixeScrollCallback = (scrollY) => {
+      if (isHoveredRef.current) {
+        isHoveredRef.current = false;
+        document.querySelectorAll('.bird-perched-target').forEach(el => el.classList.remove('bird-perched-target'));
+      }
       updateBirdOnScroll(scrollY);
     };
 
@@ -682,6 +690,10 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       end: 'bottom bottom',
       scrub: true,
       onUpdate: () => {
+        if (isHoveredRef.current) {
+          isHoveredRef.current = false;
+          document.querySelectorAll('.bird-perched-target').forEach(el => el.classList.remove('bird-perched-target'));
+        }
         updateBirdOnScroll(window.scrollY);
       }
     });
@@ -742,8 +754,8 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     };
   }, [computeMilestones, updateBirdOnScroll, startIdleFloat, stopIdleFloat]);
 
-  // DESKTOP ICON HOVER INTERACTION
-  // Add data-bird-hover to any icon element: bird swoops over, perches at ~0.35 scale, gold ring glows
+  // DESKTOP ICON & CARD HOVER INTERACTION
+  // When hovering any icon box, card, or icon, bird swoops directly over the icon with zero box-shadow
   useEffect(() => {
     const isMobile = window.innerWidth < 768;
     if (isMobile) return;
@@ -751,9 +763,17 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     const birdEl = birdRef.current;
     if (!birdEl) return;
 
+    let currentHoverEl = null;
+
+    const HOVER_SELECTOR = '[data-bird-hover], .niche-card, .problem-card, .process-step, .process-guarantee-box, .why-point-item, .service-card, .stat-card';
+    const ICON_SELECTOR = '.niche-card-icon, .problem-icon, .step-number-badge, .guarantee-icon, .why-point-icon, .service-icon-box, .stat-icon-wrapper, .avatar-circle, .trust-icon, [data-bird-icon]';
+
     const handleMouseEnter = (e) => {
-      const target = e.target.closest('[data-bird-hover]');
-      if (!target) return;
+      const box = e.target.closest(HOVER_SELECTOR);
+      if (!box) return;
+
+      if (currentHoverEl === box) return;
+      currentHoverEl = box;
 
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
@@ -763,9 +783,12 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       isHoveredRef.current = true;
       stopIdleFloat();
 
-      target.classList.add('bird-perched-target');
+      box.classList.add('bird-perched-target');
 
-      const rect = target.getBoundingClientRect();
+      // Find the specific icon to perch above
+      const iconEl = box.matches(ICON_SELECTOR) ? box : (box.querySelector(ICON_SELECTOR) || box);
+
+      const rect = iconEl.getBoundingClientRect();
       const targetX = rect.left + rect.width / 2 - 25;
       const targetY = rect.top - 20;
 
@@ -794,10 +817,18 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     };
 
     const handleMouseLeave = (e) => {
-      const target = e.target.closest('[data-bird-hover]');
-      if (!target) return;
+      const box = e.target.closest(HOVER_SELECTOR);
+      if (!box) return;
 
-      target.classList.remove('bird-perched-target');
+      // If mouse moved to a child element inside this box, keep perching
+      if (e.relatedTarget && box.contains(e.relatedTarget)) {
+        return;
+      }
+
+      box.classList.remove('bird-perched-target');
+      if (currentHoverEl === box) {
+        currentHoverEl = null;
+      }
 
       hoverTimeoutRef.current = setTimeout(() => {
         isHoveredRef.current = false;
