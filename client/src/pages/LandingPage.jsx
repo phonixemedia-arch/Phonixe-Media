@@ -66,6 +66,27 @@ export default function LandingPage({ navigateTo }) {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  // Pause Lenis smooth scroll and lock background body scroll while booking modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      if (lenisRef.current) {
+        lenisRef.current.stop();
+      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      if (lenisRef.current) {
+        lenisRef.current.start();
+      }
+      document.body.style.overflow = '';
+    }
+    return () => {
+      if (lenisRef.current) {
+        lenisRef.current.start();
+      }
+      document.body.style.overflow = '';
+    };
+  }, [isModalOpen]);
+
   // 1. Lenis Smooth Scroll Setup synced with GSAP & Scroll-to-Top on Refresh
   useEffect(() => {
     // Force manual scroll restoration so browsers do not restore scroll down the page on refresh
@@ -2165,8 +2186,17 @@ _Looking forward to discussing our 360° growth strategy!_`;
 
       {/* STRATEGY CALL BOOKING MODAL */}
       {isModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-dialog glass-card" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-backdrop" 
+          onClick={() => setIsModalOpen(false)}
+          data-lenis-prevent="true"
+        >
+          <div 
+            className="modal-dialog glass-card" 
+            onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+            data-lenis-prevent="true"
+          >
             <button className="modal-close-btn" onClick={() => setIsModalOpen(false)} aria-label="Close modal">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
