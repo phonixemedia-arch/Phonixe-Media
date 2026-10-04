@@ -290,6 +290,37 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
   const getAnchorPos = useCallback((item) => {
     if (!item || !item.element) return null;
     const rect = item.element.getBoundingClientRect();
+    const viewportW = window.innerWidth;
+    const isMobile = viewportW < 768;
+    const isTablet = viewportW >= 768 && viewportW < 1024;
+
+    if (isMobile) {
+      // On mobile (single column), keep the bird in the safe side gutters or card corners
+      // so it never obstructs centered headings, metric numbers, or body text
+      const isLeftSide = item.side === 'top-left' || item.side === 'left';
+      const safeX = isLeftSide ? 16 : (viewportW - 46);
+      return {
+        x: safeX,
+        y: rect.top - 14,
+        scale: 0.42,
+        rotation: (item.rotation || 0) * 0.5,
+        fade: !!item.fade
+      };
+    }
+
+    if (isTablet) {
+      // On tablet, keep safely in the wide side margins
+      const isLeftSide = item.side === 'top-left' || item.side === 'left';
+      const safeX = isLeftSide ? 28 : (viewportW - 64);
+      return {
+        x: safeX,
+        y: rect.top - 20,
+        scale: 0.56,
+        rotation: (item.rotation || 0) * 0.7,
+        fade: !!item.fade
+      };
+    }
+
     let x = rect.left;
     let y = rect.top;
 
@@ -384,9 +415,8 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     }
   }, []);
 
-  // Update bird position based on exact scroll offset
   const updateBirdOnScroll = useCallback((currentScroll) => {
-    if (isHoveredRef.current || window.innerWidth < 1024) return;
+    if (isHoveredRef.current) return;
     const birdEl = birdRef.current;
     const birdImg = birdImgRef.current;
     if (!birdEl || !birdImg) return;
@@ -427,13 +457,18 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     if (!p1 || !p2) return;
 
     // Clamp anchor targets into viewport frame so they never start/end off-screen
+    const minX = isMobile ? 12 : 25;
+    const maxX = isMobile ? (viewportW - 46) : (viewportW - 85);
+    const minY = 74;
+    const maxY = isMobile ? (viewportH - 80) : (viewportH - 85);
+
     const p1Clamped = {
-      x: Math.max(25, Math.min(viewportW - 85, p1.x)),
-      y: Math.max(76, Math.min(viewportH - 85, p1.y))
+      x: Math.max(minX, Math.min(maxX, p1.x)),
+      y: Math.max(minY, Math.min(maxY, p1.y))
     };
     const p2Clamped = {
-      x: Math.max(25, Math.min(viewportW - 85, p2.x)),
-      y: Math.max(76, Math.min(viewportH - 85, p2.y))
+      x: Math.max(minX, Math.min(maxX, p2.x)),
+      y: Math.max(minY, Math.min(maxY, p2.y))
     };
 
     let currentX, currentY;
@@ -453,15 +488,15 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       // In flight along arched Bézier curve
       flightT = (t - 0.15) / 0.7;
       const midX = (p1Clamped.x + p2Clamped.x) / 2;
-      const midY = Math.max(85, (p1Clamped.y + p2Clamped.y) / 2 - 60);
+      const midY = Math.max(minY + 10, (p1Clamped.y + p2Clamped.y) / 2 - (isMobile ? 30 : 60));
 
       currentX = (1 - flightT) * (1 - flightT) * p1Clamped.x + 2 * (1 - flightT) * flightT * midX + flightT * flightT * p2Clamped.x;
       currentY = (1 - flightT) * (1 - flightT) * p1Clamped.y + 2 * (1 - flightT) * flightT * midY + flightT * flightT * p2Clamped.y;
     }
 
     // Bulletproof viewport clamping: bird is ALWAYS visible on screen
-    currentX = Math.max(25, Math.min(viewportW - 85, currentX));
-    currentY = Math.max(76, Math.min(viewportH - 85, currentY));
+    currentX = Math.max(minX, Math.min(maxX, currentX));
+    currentY = Math.max(minY, Math.min(maxY, currentY));
 
     // Direction and flight trajectory angle
     const dx = currentX - (lastPosRef.current.x || currentX);
@@ -477,7 +512,6 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
 
     // Scale and opacity
     let targetScale = (1 - flightT) * p1.scale + flightT * p2.scale;
-    if (isMobile) targetScale *= 0.65;
 
     let targetOpacity = 1;
     if (p2.fade && flightT > 0.6) {
@@ -504,9 +538,8 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     lastPosRef.current = { x: currentX, y: currentY };
   }, [computeMilestones, getAnchorPos]);
 
-  // Upward Drifting Gold Ember Particles Canvas (Desktop only >= 1024px)
+  // Upward Drifting Gold Ember Particles Canvas (Optimized for all viewports)
   useEffect(() => {
-    if (window.innerWidth < 1024) return;
     const canvas = embersCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -532,16 +565,17 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     // Particle emitter for bird trail
     const addEmber = (x, y) => {
       const isMobile = window.innerWidth < 768;
-      const maxCount = isMobile ? 12 : 40;
-      if (particles.length >= maxCount + 8) return;
+      const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+      const maxCount = isMobile ? 8 : (isTablet ? 16 : 38);
+      if (particles.length >= maxCount + 4) return;
       particles.push({
-        x: x + (Math.random() - 0.5) * 14,
-        y: y + (Math.random() - 0.5) * 14,
-        vx: (Math.random() - 0.5) * 0.7,
-        vy: -0.6 - Math.random() * 0.7,
-        alpha: 0.8 + Math.random() * 0.2,
-        size: 1.4 + Math.random() * 2,
-        decay: 0.016 + Math.random() * 0.014,
+        x: x + (Math.random() - 0.5) * (isMobile ? 8 : 14),
+        y: y + (Math.random() - 0.5) * (isMobile ? 8 : 14),
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: -0.5 - Math.random() * 0.6,
+        alpha: 0.75 + Math.random() * 0.2,
+        size: isMobile ? (1.0 + Math.random() * 1.2) : (1.4 + Math.random() * 2),
+        decay: isMobile ? 0.024 : (0.016 + Math.random() * 0.014),
         swayOffset: Math.random() * Math.PI * 2,
         swaySpeed: 0.03
       });
@@ -552,7 +586,8 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     // Ambient spark generator
     const spawnAmbientSparks = () => {
       const isMobile = window.innerWidth < 768;
-      const baseMax = isMobile ? 12 : 40;
+      const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+      const baseMax = isMobile ? 6 : (isTablet ? 14 : 36);
 
       // Check proximity to rescue banner or final CTA to increase density
       let isNearSpecialSection = false;
@@ -646,9 +681,8 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     };
   }, []);
 
-  // Main GSAP ScrollTrigger Flight Setup (Desktop only >= 1024px)
+  // Main GSAP ScrollTrigger Flight Setup (All viewports: desktop, tablet, mobile)
   useEffect(() => {
-    if (window.innerWidth < 1024) return;
     const birdEl = birdRef.current;
     const birdImg = birdImgRef.current;
     if (!birdEl || !birdImg) return;
@@ -698,9 +732,10 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
       }
     });
 
-    // 4-STEP GROWTH SYSTEM DESKTOP PINNING (Pins timeline cleanly for 450px)
+    // 4-STEP GROWTH SYSTEM DESKTOP PINNING (Pins timeline cleanly for 450px on desktop >= 1024px only)
     let processPinTrigger = null;
-    if (!isMobile) {
+    const isDesktop = window.innerWidth >= 1024;
+    if (isDesktop) {
       const timelineEl = document.querySelector('.process-timeline');
       const processSteps = document.querySelectorAll('.process-step');
 

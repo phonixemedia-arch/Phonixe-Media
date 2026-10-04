@@ -2932,18 +2932,30 @@ button {
   z-index: 1; /* Layered behind content cards and text (z-index 2) */
 }
 
-/* Hide floating bird & particle canvas on mobile & tablet (< 1024px) for clean, unobstructed reading */
+/* Responsive Phoenix Bird & Particle Canvas for Tablet & Mobile */
 @media (max-width: 1023px) {
   .phoenix-bird-wrapper {
-    display: none !important;
-    visibility: hidden !important;
+    display: block !important;
     pointer-events: none !important;
+    z-index: 85;
+  }
+
+  .phoenix-bird-img {
+    width: 58px;
+    filter: drop-shadow(0 0 10px rgba(229, 169, 60, 0.75));
   }
 
   .phoenix-embers-canvas {
-    display: none !important;
-    visibility: hidden !important;
+    display: block !important;
     pointer-events: none !important;
+    opacity: 0.65;
+  }
+}
+
+@media (max-width: 768px) {
+  .phoenix-bird-img {
+    width: 48px;
+    filter: drop-shadow(0 0 8px rgba(229, 169, 60, 0.65));
   }
 }
 
