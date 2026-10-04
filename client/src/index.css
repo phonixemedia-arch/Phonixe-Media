@@ -1219,6 +1219,9 @@ button {
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
+.services-cta-wrap {
+  margin-top: 48px;
+}
 
 /* Process Section */
 .process-section { padding: 100px 0; background: rgba(14, 15, 20, 0.45); }
@@ -2428,6 +2431,26 @@ button {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .services-section,
+  .process-section,
+  .results-section,
+  .why-us-section,
+  .faq-section {
+    padding: 64px 0;
+  }
+
+  .final-cta-section {
+    padding: 64px 0 95px;
+  }
+
+  .section-header {
+    margin-bottom: 38px;
+  }
+
+  .services-cta-wrap {
+    margin-top: 32px;
+  }
+
   .why-us-layout {
     grid-template-columns: 1fr;
     gap: 40px;
@@ -2524,17 +2547,44 @@ button {
     gap: 10px;
   }
 
+  .services-section,
+  .process-section,
+  .results-section,
+  .why-us-section,
+  .faq-section {
+    padding: 48px 0;
+  }
+
+  .final-cta-section {
+    padding: 48px 0 90px;
+  }
+
+  .section-header {
+    margin-bottom: 28px;
+  }
+
+  .services-cta-wrap {
+    margin-top: 24px;
+  }
+
   .mockup-reel-floating {
     grid-template-columns: auto 1fr;
     text-align: left;
     align-items: flex-start;
+    margin-bottom: 12px;
+    transform: none !important;
   }
 
   .floating-conversion-badge {
-    flex-direction: column;
-    text-align: center;
+    display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 8px;
+    text-align: left;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    transform: none !important;
   }
 
   .badge-gold {
@@ -2634,10 +2684,11 @@ button {
   }
 
   .floating-back-to-top-btn {
-    bottom: 84px;
-    right: 18px;
-    width: 44px;
-    height: 44px;
+    bottom: 78px;
+    right: 14px;
+    width: 38px;
+    height: 38px;
+    font-size: 0.85rem;
     z-index: 99;
   }
 
@@ -2738,13 +2789,20 @@ button {
     grid-template-columns: auto 1fr;
     text-align: left;
     align-items: flex-start;
+    margin-bottom: 12px;
+    transform: none !important;
   }
 
   .floating-conversion-badge {
-    flex-direction: column;
-    text-align: center;
+    display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 8px;
+    text-align: left;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    transform: none !important;
   }
 
   .cta-banner-wrapper {
@@ -2872,6 +2930,21 @@ button {
   height: 100vh;
   pointer-events: none;
   z-index: 1; /* Layered behind content cards and text (z-index 2) */
+}
+
+/* Hide floating bird & particle canvas on mobile & tablet (< 1024px) for clean, unobstructed reading */
+@media (max-width: 1023px) {
+  .phoenix-bird-wrapper {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .phoenix-embers-canvas {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
 }
 
 /* Thin Gold Scroll-Progress Line at Very Top of Viewport */

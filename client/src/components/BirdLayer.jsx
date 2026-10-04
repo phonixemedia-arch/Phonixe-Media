@@ -386,7 +386,7 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
 
   // Update bird position based on exact scroll offset
   const updateBirdOnScroll = useCallback((currentScroll) => {
-    if (isHoveredRef.current) return;
+    if (isHoveredRef.current || window.innerWidth < 1024) return;
     const birdEl = birdRef.current;
     const birdImg = birdImgRef.current;
     if (!birdEl || !birdImg) return;
@@ -504,8 +504,9 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     lastPosRef.current = { x: currentX, y: currentY };
   }, [computeMilestones, getAnchorPos]);
 
-  // Upward Drifting Gold Ember Particles Canvas (max ~40 desktop, ~12 mobile, pause when offscreen)
+  // Upward Drifting Gold Ember Particles Canvas (Desktop only >= 1024px)
   useEffect(() => {
+    if (window.innerWidth < 1024) return;
     const canvas = embersCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -645,13 +646,12 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     };
   }, []);
 
-  // Main GSAP ScrollTrigger Flight Setup
+  // Main GSAP ScrollTrigger Flight Setup (Desktop only >= 1024px)
   useEffect(() => {
+    if (window.innerWidth < 1024) return;
     const birdEl = birdRef.current;
     const birdImg = birdImgRef.current;
     if (!birdEl || !birdImg) return;
-
-    const isMobile = window.innerWidth < 768;
 
     // Quick setters for smooth responsive positioning
     quickX.current = gsap.quickTo(birdEl, 'x', { duration: 0.5, ease: 'power3.out' });
@@ -754,11 +754,11 @@ export default function BirdLayer({ anchors = defaultBirdAnchors, activeFaq = nu
     };
   }, [computeMilestones, updateBirdOnScroll, startIdleFloat, stopIdleFloat]);
 
-  // DESKTOP ICON & CARD HOVER INTERACTION
+  // DESKTOP ICON & CARD HOVER INTERACTION (Desktop only >= 1024px)
   // When hovering any icon box, card, or icon, bird swoops directly over the icon with zero box-shadow
   useEffect(() => {
-    const isMobile = window.innerWidth < 768;
-    if (isMobile) return;
+    const isMobileOrTablet = window.innerWidth < 1024;
+    if (isMobileOrTablet) return;
 
     const birdEl = birdRef.current;
     if (!birdEl) return;

@@ -362,7 +362,7 @@ export default function LandingPage({ navigateTo }) {
     return () => window.removeEventListener('scroll', checkColorTemperature);
   }, [data]);
 
-  // 3. Hero Depth: Floating Cards Parallax
+  // 3. Hero Depth: Floating Cards Parallax (Desktop Only >= 1024px)
   useEffect(() => {
     const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (isReduced) return;
@@ -372,6 +372,11 @@ export default function LandingPage({ navigateTo }) {
     if (!reelCard && !convBadge) return;
 
     const onScroll = () => {
+      if (window.innerWidth < 1024) {
+        if (convBadge) convBadge.style.transform = '';
+        if (reelCard) reelCard.style.removeProperty('--reel-parallax-y');
+        return;
+      }
       const y = window.scrollY;
       if (y > 800) return;
       if (reelCard) {
@@ -383,7 +388,11 @@ export default function LandingPage({ navigateTo }) {
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
   }, []);
 
   // Reel Views Count-Up Animation (0 to 6.9M once on scroll into view)
@@ -1666,7 +1675,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             ))}
           </div>
 
-          <div className="text-center" style={{ marginTop: '50px' }}>
+          <div className="text-center services-cta-wrap">
             <button className="btn btn-gold btn-large" onClick={() => setIsModalOpen(true)}>
               Request A Custom Growth Package &rarr;
             </button>
