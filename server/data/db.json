@@ -71,7 +71,7 @@
   "services": [
     {
       "_id": "srv_1",
-      "title": "Organic Social Media Marketing",
+      "title": "Social Media Marketing",
       "badge": "Core Engine",
       "desc": "Strategic distribution and organic community management that expands your presence without expensive, low-trust paid ads.",
       "features": [
@@ -228,29 +228,29 @@
   "testimonials": [
     {
       "_id": "test_1",
-      "authorName": "[Client Name / Verified Coach]",
-      "niche": "Tarot & Spiritual Reader",
-      "quote": "Before Phonixe Media, I spent endless hours editing my own reels and barely got any readings booked. Within 45 days of their scripting and shooting system, my profile reach exploded and I booked out my private sessions!",
+      "authorName": "Chanchal Lalwani",
+      "niche": "Numerologist | Pune, Maharashtra",
+      "quote": "Phonixe Media completely transformed how I present numerology online. Their team turned complex destiny numbers and birth chart concepts into high-save carousels and cinematic reels that instantly connect with seekers. Within 60 days, my organic reach exploded, and I went from struggling for visibility to consistently booking high-ticket 1-on-1 consultations directly from Instagram DMs!",
       "stars": 5,
-      "avatarEmoji": "✨",
+      "avatarEmoji": "🔢",
       "order": 1
     },
     {
       "_id": "test_2",
-      "authorName": "[Client Name / Consultant]",
-      "niche": "Vastu & Energy Architect",
-      "quote": "The shooting direction was a total game-changer for me. As a Vastu consultant, explaining energy principles on camera was tough. Phonixe scripted it so clearly that high-net-worth clients started messaging me directly for property audits.",
+      "authorName": "Ruchika Agrawal",
+      "niche": "Relationship Mentor | Mumbai, Maharashtra",
+      "quote": "Before working with Phonixe Media, I was exhausted trying to figure out video editing and storytelling on my own. Their scripting direction gave me authentic, emotionally resonant hooks that address real marital communication and relationship healing. One of our viral reels crossed 6.9M views and brought in over 79 qualified discovery call leads in a single month. My coaching practice in Mumbai is now fully booked!",
       "stars": 5,
-      "avatarEmoji": "🏛️",
+      "avatarEmoji": "🤝",
       "order": 2
     },
     {
       "_id": "test_3",
-      "authorName": "[Client Name / Founder]",
-      "niche": "Akashic & Relationship Mentor",
-      "quote": "The greatest relief is the consistency. I record for 2 hours once a month and my entire Instagram is handled at a celebrity level. My discovery call calendar has never been this reliably full!",
+      "authorName": "Dr. Niti Pandya",
+      "niche": "Overthinking & Breakup Recovery Expert | Ahmedabad, Gujarat",
+      "quote": "Phonixe Media's 2-hour batch filming system was a total breakthrough for my practice. They helped me articulate sensitive emotional triggers and heartbreak recovery frameworks with immense dignity, clarity, and authority. The quality of clients reaching out from Ahmedabad and across India has elevated dramatically — seekers who deeply value my expertise and convert into long-term private mentorship programs.",
       "stars": 5,
-      "avatarEmoji": "💫",
+      "avatarEmoji": "🌿",
       "order": 3
     }
   ],

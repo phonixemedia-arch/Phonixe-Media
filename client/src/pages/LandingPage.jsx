@@ -1506,7 +1506,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
               <div className="card-light-sweep" aria-hidden="true" />
               <div className="niche-card-icon" data-bird-hover>🔮</div>
-              <h3>Tarot Readers & Intuitives</h3>
+              <h3>Tarot Readers</h3>
               <p>Convert general curiosity into deeply engaged 1-on-1 private reading clients through high-trust card explanation reels, predictive insights, and ethical boundaries.</p>
               <div className="niche-focus-tags">
                 <span>Reading DMs</span>
@@ -1518,7 +1518,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
               <div className="card-light-sweep" aria-hidden="true" />
               <div className="niche-card-icon" data-bird-hover>🔢</div>
-              <h3>Numerologists & Astro Mentors</h3>
+              <h3>Numerologists</h3>
               <p>Break down complex birth date matrixes, destiny numbers, and master numbers into digestible visual carousels and relatable reels that evoke instant realization.</p>
               <div className="niche-focus-tags">
                 <span>Destiny Numbers</span>
@@ -1530,7 +1530,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
               <div className="card-light-sweep" aria-hidden="true" />
               <div className="niche-card-icon" data-bird-hover>🏛️</div>
-              <h3>Vastu & Energy Experts</h3>
+              <h3>Vastu Experts</h3>
               <p>Showcase real property transformations, architectural energy remedies, and actionable lifestyle adjustments that position you as the definitive high-ticket consultant.</p>
               <div className="niche-focus-tags">
                 <span>Site Inspections</span>
@@ -1554,7 +1554,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
               <div className="card-light-sweep" aria-hidden="true" />
               <div className="niche-card-icon" data-bird-hover>🤝</div>
-              <h3>Relationship & Marriage Mentors</h3>
+              <h3>Relationship Coaches</h3>
               <p>Address painful communication breakdowns, attachment triggers, and partnership healing with empathetic video scripts that build immediate emotional safety.</p>
               <div className="niche-focus-tags">
                 <span>Emotional Resonance</span>
@@ -1690,6 +1690,10 @@ _Looking forward to discussing our 360° growth strategy!_`;
             <span className="section-subtitle">THE BLUEPRINT</span>
             <h2 className="section-title">{c.processHeadline || 'Our Simple 4-Step Growth System'}</h2>
             <p className="section-lead">A seamless, stress-free methodology that takes you from random posting to an automated client attraction machine.</p>
+            <div className="blueprint-warning-pill">
+              <span className="warning-icon" aria-hidden="true">⚠️</span>
+              <span>Real organic growth takes time. The first 3 months build your foundation.</span>
+            </div>
           </div>
 
           <div className="process-timeline">

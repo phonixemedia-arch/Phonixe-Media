@@ -60,7 +60,7 @@ export const DEFAULT_LANDING_DATA = {
   services: [
     {
       _id: "srv_1",
-      title: "Organic Social Media Marketing",
+      title: "Social Media Marketing",
       badge: "Core Engine",
       desc: "Strategic distribution and organic community management that expands your presence without expensive, low-trust paid ads.",
       features: [
@@ -190,27 +190,27 @@ export const DEFAULT_LANDING_DATA = {
   testimonials: [
     {
       _id: "t_1",
-      authorName: "Kavita S.",
-      niche: "Tarot Reader & Energy Alchemist",
+      authorName: "Chanchal Lalwani",
+      niche: "Numerologist | Pune, Maharashtra",
       stars: 5,
-      avatarEmoji: "🔮",
-      quote: "Before Phonixe Media, I was exhausted trying to edit videos until 2 AM. Their team completely transformed my Instagram. My reels now get 50K+ organic views, and my DM inbox has genuine seekers booking paid sessions daily!"
+      avatarEmoji: "🔢",
+      quote: "Phonixe Media completely transformed how I present numerology online. Their team turned complex destiny numbers and birth chart concepts into high-save carousels and cinematic reels that instantly connect with seekers. Within 60 days, my organic reach exploded, and I went from struggling for visibility to consistently booking high-ticket 1-on-1 consultations directly from Instagram DMs!"
     },
     {
       _id: "t_2",
-      authorName: "Rohit V.",
-      niche: "Celebrity Numerologist",
+      authorName: "Ruchika Agrawal",
+      niche: "Relationship Mentor | Mumbai, Maharashtra",
       stars: 5,
-      avatarEmoji: "🔢",
-      quote: "Phonixe Media doesn’t just make pretty videos — they understand how to position a personal brand for high-ticket consultations. In our second month, we closed 14 new premium clients directly from organic Instagram!"
+      avatarEmoji: "🤝",
+      quote: "Before working with Phonixe Media, I was exhausted trying to figure out video editing and storytelling on my own. Their scripting direction gave me authentic, emotionally resonant hooks that address real marital communication and relationship healing. One of our viral reels crossed 6.9M views and brought in over 79 qualified discovery call leads in a single month. My coaching practice in Mumbai is now fully booked!"
     },
     {
       _id: "t_3",
-      authorName: "Ananya M.",
-      niche: "Vastu & Sacred Space Consultant",
+      authorName: "Dr. Niti Pandya",
+      niche: "Overthinking & Breakup Recovery Expert | Ahmedabad, Gujarat",
       stars: 5,
-      avatarEmoji: "🏛️",
-      quote: "The shooting direction is a game-changer. They gave me exact teleprompter hooks and guided my camera presence. My clients tell me my page looks like a Forbes-level consultancy now."
+      avatarEmoji: "🌿",
+      quote: "Phonixe Media's 2-hour batch filming system was a total breakthrough for my practice. They helped me articulate sensitive emotional triggers and heartbreak recovery frameworks with immense dignity, clarity, and authority. The quality of clients reaching out from Ahmedabad and across India has elevated dramatically — seekers who deeply value my expertise and convert into long-term private mentorship programs."
     }
   ],
   faqs: [

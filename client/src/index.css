@@ -1225,6 +1225,29 @@ button {
 
 /* Process Section */
 .process-section { padding: 100px 0; background: rgba(14, 15, 20, 0.45); }
+.blueprint-warning-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  padding: 8px 20px;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #FBBF24;
+  margin-top: 18px;
+  line-height: 1.45;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.blueprint-warning-pill .warning-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
 .process-timeline {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
