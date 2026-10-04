@@ -813,16 +813,45 @@ button {
 }
 .growth-chart-svg { width: 100%; height: 90px; overflow: visible; }
 
+/* Hero Floating Reel Card (Instagram Link) */
 .mockup-reel-floating {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: rgba(25, 27, 36, 0.9);
+  gap: 14px;
+  padding: 12px 14px;
+  background: rgba(25, 27, 36, 0.92);
   border: 1px solid rgba(229, 169, 60, 0.35);
   border-radius: var(--radius-md);
   margin-bottom: 12px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  position: relative;
+  transform: translateY(var(--reel-parallax-y, 0px));
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease,
+              box-shadow 0.25s ease;
+  will-change: transform;
 }
+
+.mockup-reel-floating:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 3px;
+}
+
+.mockup-reel-floating:active {
+  transform: scale(0.98);
+}
+
+@media (hover: hover) and (min-width: 768px) {
+  .mockup-reel-floating:hover {
+    transform: translateY(calc(var(--reel-parallax-y, 0px) - 4px));
+    border-color: var(--gold-bright);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 22px rgba(229, 169, 60, 0.35);
+  }
+}
+
 .reel-thumbnail {
   width: 48px;
   height: 60px;
@@ -832,7 +861,139 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.25s ease, 
+              border-color 0.25s ease;
+}
+
+.reel-cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.reel-thumbnail-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.65) 100%);
+  pointer-events: none;
+}
+
+.reel-play-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 0.85rem;
   color: var(--gold-bright);
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  transition: transform 0.25s ease;
+}
+
+@media (hover: hover) and (min-width: 768px) {
+  .mockup-reel-floating:hover .reel-thumbnail {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(229, 169, 60, 0.75);
+    border-color: var(--gold-bright);
+  }
+  .mockup-reel-floating:hover .reel-play-icon {
+    transform: scale(1.1);
+  }
+}
+
+.reel-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.reel-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--gold-light);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reel-hook-text {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.reel-views-line {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.reel-views-count {
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.reel-action-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  background: rgba(229, 169, 60, 0.1);
+  border: 1px solid rgba(229, 169, 60, 0.32);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+@media (hover: hover) and (min-width: 768px) {
+  .mockup-reel-floating:hover .reel-action-badge {
+    background: rgba(229, 169, 60, 0.22);
+    border-color: var(--gold-bright);
+    color: #FFF;
+    box-shadow: 0 0 12px rgba(229, 169, 60, 0.35);
+  }
+}
+
+.reel-action-glyph {
+  color: var(--gold-bright);
+  flex-shrink: 0;
+}
+
+.reel-arrow-icon {
+  display: inline-block;
+  font-weight: 800;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (min-width: 768px) {
+  .mockup-reel-floating:hover .reel-arrow-icon {
+    transform: translate(3px, -3px);
+  }
+}
+
+@media (max-width: 600px) {
+  .mockup-reel-floating {
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .reel-action-badge {
+    grid-column: 2 / -1;
+    margin-top: 4px;
+    align-self: flex-start;
+  }
 }
 .floating-conversion-badge {
   display: flex;
@@ -2331,9 +2492,9 @@ button {
   }
 
   .mockup-reel-floating {
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
+    grid-template-columns: auto 1fr;
+    text-align: left;
+    align-items: flex-start;
   }
 
   .floating-conversion-badge {
@@ -2541,9 +2702,9 @@ button {
   }
 
   .mockup-reel-floating {
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
+    grid-template-columns: auto 1fr;
+    text-align: left;
+    align-items: flex-start;
   }
 
   .floating-conversion-badge {
