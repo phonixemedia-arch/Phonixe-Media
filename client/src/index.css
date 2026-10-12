@@ -520,11 +520,13 @@ button {
   border-radius: 2px;
 }
 
-.nav-links a:hover { 
+.nav-links a:hover,
+.nav-links a.active { 
   color: var(--gold-light); 
 }
 
-.nav-links a:hover::after {
+.nav-links a:hover::after,
+.nav-links a.active::after {
   width: 100%;
 }
 
@@ -594,6 +596,12 @@ button {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-white);
+  transition: color 0.2s ease;
+}
+
+.mobile-link:hover,
+.mobile-link.active {
+  color: var(--gold-light);
 }
 
 /* Hero Section */
@@ -1517,6 +1525,520 @@ button {
   font-weight: 500;
   color: var(--gold-light);
   line-height: 1.35;
+}
+
+/* ==========================================================================
+   ABOUT US SECTION (OUR STORY)
+   ========================================================================== */
+.about-section {
+  padding: 100px 0;
+  position: relative;
+  scroll-margin-top: 90px;
+}
+
+/* 1. Founder Block (Two-Column on Desktop, Stacked on Mobile) */
+.about-founder-grid {
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: 36px;
+  align-items: stretch;
+  margin-bottom: 90px;
+}
+
+.founder-photo-card {
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-color: rgba(229, 169, 60, 0.32);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), 0 0 32px rgba(229, 169, 60, 0.12);
+}
+
+.founder-photo-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 4.6;
+  border-radius: calc(var(--radius-lg) - 4px);
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, rgba(229, 169, 60, 0.16), rgba(10, 11, 16, 0.96) 75%);
+  border: 1px solid rgba(229, 169, 60, 0.28);
+}
+
+.founder-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (min-width: 768px) {
+  .founder-photo-card:hover .founder-photo-img {
+    transform: scale(1.03);
+  }
+}
+
+.founder-photo-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgba(9, 10, 13, 0.82) 100%);
+  pointer-events: none;
+}
+
+/* Styled Placeholder when /assets/founder.jpg is not yet provided */
+.founder-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 24px;
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(229, 169, 60, 0.22) 0%, rgba(245, 199, 107, 0.05) 45%, transparent 75%),
+    linear-gradient(160deg, #13151E 0%, #090A0D 100%);
+}
+
+.founder-placeholder-glow {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(229, 169, 60, 0.32) 0%, transparent 70%);
+  filter: blur(22px);
+  pointer-events: none;
+}
+
+.founder-placeholder-emblem {
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 24px rgba(229, 169, 60, 0.55));
+}
+
+.founder-placeholder-title {
+  position: relative;
+  z-index: 2;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-white);
+  margin-bottom: 6px;
+}
+
+.founder-placeholder-subtitle {
+  position: relative;
+  z-index: 2;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gold-light);
+  letter-spacing: 0.03em;
+}
+
+.founder-photo-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(229, 169, 60, 0.08);
+  border: 1px solid rgba(229, 169, 60, 0.22);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+}
+
+.founder-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 10px var(--gold-bright);
+  flex-shrink: 0;
+}
+
+/* Right: Founder Bio Card */
+.founder-bio-card {
+  padding: 42px 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.founder-bio-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.founder-eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold-primary);
+  margin-bottom: 8px;
+}
+
+.founder-name {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-white);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.founder-role {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+.founder-socials {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.founder-social-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  background: rgba(229, 169, 60, 0.1);
+  border: 1px solid rgba(229, 169, 60, 0.28);
+  color: var(--gold-light);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.founder-social-btn:hover {
+  background: var(--gold-gradient);
+  color: #090A0D;
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(229, 169, 60, 0.35);
+}
+
+.founder-bio-paragraphs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.founder-bio-paragraphs p {
+  font-size: 0.96rem;
+  line-height: 1.72;
+  color: var(--text-main);
+}
+
+.founder-pull-quote {
+  margin: 0;
+  padding: 22px 26px;
+  border-radius: var(--radius-md);
+  background: rgba(229, 169, 60, 0.07);
+  border-left: 3px solid var(--gold-primary);
+  border-top: 1px solid rgba(229, 169, 60, 0.18);
+  border-right: 1px solid rgba(229, 169, 60, 0.18);
+  border-bottom: 1px solid rgba(229, 169, 60, 0.18);
+  position: relative;
+}
+
+.founder-pull-quote .quote-mark {
+  position: absolute;
+  top: 8px;
+  right: 18px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 3.2rem;
+  line-height: 1;
+  color: rgba(229, 169, 60, 0.16);
+  pointer-events: none;
+}
+
+.founder-pull-quote p {
+  font-size: 1.12rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Sub-headers inside About Section */
+.about-sub-header {
+  max-width: 680px;
+  margin: 0 auto 44px;
+}
+
+.about-sub-title {
+  font-size: clamp(1.65rem, 3vw, 2.25rem);
+  font-weight: 800;
+  color: var(--text-white);
+  margin-top: 8px;
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+
+.about-sub-lead {
+  font-size: 0.98rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+/* 2. How It Started (Vertical Timeline) */
+.about-timeline-wrapper {
+  margin-bottom: 90px;
+}
+
+.about-story-timeline {
+  position: relative;
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-left: 36px;
+}
+
+.about-timeline-line {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 11px;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(229, 169, 60, 0.15) 0%,
+    rgba(229, 169, 60, 0.65) 20%,
+    rgba(255, 215, 0, 0.75) 80%,
+    rgba(229, 169, 60, 0.15) 100%
+  );
+  box-shadow: 0 0 14px rgba(229, 169, 60, 0.35);
+}
+
+.about-timeline-item {
+  position: relative;
+}
+
+.about-timeline-node {
+  position: absolute;
+  left: -36px;
+  top: 32px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0E0F14;
+  border: 2px solid var(--gold-primary);
+  box-shadow: 0 0 16px rgba(229, 169, 60, 0.55);
+  color: var(--gold-bright);
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+.about-timeline-card {
+  padding: 32px 32px;
+  height: auto;
+}
+
+.about-timeline-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.about-year-badge {
+  font-size: 2.1rem;
+  margin-bottom: 0;
+}
+
+.about-timeline-meta .step-tag {
+  margin-bottom: 0;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(229, 169, 60, 0.12);
+  border: 1px solid rgba(229, 169, 60, 0.25);
+}
+
+.about-timeline-card .step-desc {
+  margin-bottom: 0;
+  font-size: 0.93rem;
+  line-height: 1.68;
+}
+
+/* 3. Mission & Values (3 Cards in a Row, Stacked on Mobile) */
+.about-values-wrapper {
+  margin-bottom: 64px;
+}
+
+.about-values-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.about-value-card {
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100%;
+}
+
+.about-value-badge {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-md);
+  background: rgba(229, 169, 60, 0.1);
+  border: 1px solid rgba(229, 169, 60, 0.28);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  margin-bottom: 18px;
+}
+
+.about-value-card h3 {
+  font-size: 1.24rem;
+  font-weight: 700;
+  color: var(--text-white);
+  margin-bottom: 10px;
+  line-height: 1.35;
+}
+
+.about-value-card p {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* 4. Closing CTA */
+.about-closing-cta {
+  margin-top: 0;
+  padding: 40px 32px;
+}
+
+.about-cta-heading {
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 800;
+  color: var(--text-white);
+  margin-bottom: 22px;
+  line-height: 1.35;
+}
+
+@media (max-width: 1024px) {
+  .about-founder-grid {
+    grid-template-columns: 1fr;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 72px;
+  }
+  .founder-photo-frame {
+    aspect-ratio: 4 / 3.8;
+    max-height: 460px;
+  }
+  .about-values-grid {
+    grid-template-columns: 1fr;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-section {
+    padding: 72px 0;
+  }
+  .founder-bio-card {
+    padding: 28px 22px;
+  }
+  .founder-bio-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .founder-name {
+    font-size: 1.5rem;
+  }
+  .founder-pull-quote {
+    padding: 18px 20px;
+  }
+  .founder-pull-quote p {
+    font-size: 1rem;
+  }
+  .about-timeline-wrapper {
+    margin-bottom: 68px;
+  }
+  .about-story-timeline {
+    padding-left: 28px;
+    gap: 20px;
+  }
+  .about-timeline-line {
+    left: 8px;
+  }
+  .about-timeline-node {
+    left: -28px;
+    top: 26px;
+    width: 20px;
+    height: 20px;
+    font-size: 0.6rem;
+  }
+  .about-timeline-card {
+    padding: 24px 20px;
+  }
+  .about-year-badge {
+    font-size: 1.75rem;
+  }
+  .about-value-card {
+    padding: 26px 22px;
+  }
+  .about-closing-cta {
+    padding: 32px 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .founder-photo-card {
+    padding: 14px;
+  }
+  .founder-photo-frame {
+    aspect-ratio: 4 / 4.3;
+  }
+  .founder-bio-card {
+    padding: 24px 18px;
+  }
+  .about-story-timeline {
+    padding-left: 24px;
+  }
+  .about-timeline-line {
+    left: 6px;
+  }
+  .about-timeline-node {
+    left: -24px;
+    width: 18px;
+    height: 18px;
+  }
 }
 
 /* Why Us Section */

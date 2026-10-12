@@ -239,5 +239,90 @@ export const DEFAULT_LANDING_DATA = {
       question: "How do I get started?",
       answer: "Click the 'Book Strategy Call' or 'WhatsApp' button on this page. We'll conduct a comprehensive audit of your current social presence and show you the exact roadmap to scale your coaching brand."
     }
-  ]
+  ],
+
+  // ============================================================================
+  // ABOUT US SECTION DATA (Edit Founder Details, Photo, Timeline & Values Here)
+  // ============================================================================
+  about: {
+    label: "OUR STORY",
+    headingPrefix: "The Story Behind",
+    headingHighlight: "Phonixe Media.",
+    subheading: "We help spiritual, wellness, and expert-led brands turn their deep wisdom into undeniable digital influence.",
+
+    // 1. Founder Block
+    // Drop the founder photo at: client/public/assets/founder.jpg
+    founder: {
+      name: "Founder of Phonixe Media",
+      title: "Founder & Creative Director, Phonixe Media",
+      photoUrl: "/assets/founder.jpg",
+      photoAlt: "Founder of Phonixe Media — 360° Personal Branding Agency",
+      badgeText: "Born From Rising High",
+      bio: [
+        "Phonixe Media was founded on a singular conviction: the mentors, healers, tarot readers, numerologists, and relationship coaches who genuinely transform lives shouldn't be invisible online while louder, less qualified voices dominate social feeds.",
+        "After watching brilliant practitioners burn out trying to film, edit, and decode ever-changing algorithms on their own—or lose their authentic voice to generic marketing agencies—we built a dedicated 360° personal branding ecosystem designed specifically for transformational leaders.",
+        "Our name, Phonixe, is inspired by the mythical Phoenix ('Born From Rising High'): we take your quiet, hard-earned expertise and elevate it into a radiant digital authority that commands respect, builds deep human trust, and consistently attracts high-intent clients."
+      ],
+      quote: "Your wisdom is meant to transform lives—not stay hidden behind an inconsistent social feed. When your true voice rises, the right seekers always find you.",
+      socials: {
+        instagram: "https://www.instagram.com/phonixe.media/",
+        linkedin: "https://www.linkedin.com/"
+      }
+    },
+
+    // 2. How It Started (Vertical Timeline)
+    timelineHeading: "How It Started",
+    timelineSubheading: "Why we chose the name Phonixe — and how a mission to elevate spiritual & coaching leaders became a 360° growth engine.",
+    timeline: [
+      {
+        year: "2022",
+        tag: "THE SPARK",
+        title: "Seeing True Experts Stay Invisible",
+        description: "We noticed a painful gap in the industry: deeply gifted tarot readers, numerologists, vastu experts, and life mentors were relying solely on word-of-mouth while generic agencies pushed them to do gimmicky trends that hurt their sacred credibility."
+      },
+      {
+        year: "2023",
+        tag: "FIRST BREAKTHROUGH",
+        title: "The 2-Hour Batch & Storytelling System",
+        description: "We engineered our signature psychology-backed scripting and 2-hour monthly batch filming workflow. Our very first cohort of spiritual and relationship mentors crossed 1M+ organic views and filled their 1-on-1 consultation calendars without spending a rupee on paid ads."
+      },
+      {
+        year: "2024",
+        tag: "RISING HIGH",
+        title: "Born From Rising High — Becoming Phonixe Media",
+        description: "Embodying the Phoenix symbolism—rising above algorithm noise with timeless authority—we expanded into a full-spectrum creative studio, crossing 1.3 Cr+ organic accounts reached and integrating automated comment-to-WhatsApp conversion funnels."
+      },
+      {
+        year: "TODAY",
+        tag: "THE 360° ECOSYSTEM",
+        title: "50+ Transformational Brands & A Dedicated Specialist Team",
+        description: "Today, Phonixe Media stands as the premier growth partner for 50+ coaches, healers, and consultants across India—backed by an in-house team of brand strategists, scriptwriters, shoot directors, retention editors, and funnel architects."
+      }
+    ],
+
+    // 3. Mission & Values (3 Cards)
+    valuesHeading: "Our Core Values",
+    values: [
+      {
+        number: "01",
+        title: "Authenticity Over Algorithms",
+        description: "We never force you into awkward trends—every script honors your true voice, spiritual integrity, and lived wisdom."
+      },
+      {
+        number: "02",
+        title: "Authority That Converts",
+        description: "Viral views mean nothing without trust; we engineer every reel and funnel to turn passive viewers into booked consultations."
+      },
+      {
+        number: "03",
+        title: "Effortless Execution",
+        description: "Your energy belongs with your clients and craft—our 360° team handles strategy, scripting, editing, and growth end to end."
+      }
+    ],
+
+    // 4. Closing CTA
+    ctaPrompt: "Ready to write your brand's story?",
+    ctaButtonText: "Book a Free Strategy Call"
+  }
 };
+

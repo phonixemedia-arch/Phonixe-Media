@@ -38,6 +38,8 @@ export default function LandingPage({ navigateTo }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isNavHidden, setIsNavHidden] = useState(false);
   const [isPastHero, setIsPastHero] = useState(false);
+  const [activeSection, setActiveSection] = useState('');
+  const [founderImgError, setFounderImgError] = useState(false);
 
   const c = data?.content || {};
   const cleanWa = (c.whatsappNumber || '+91 8799690069').replace(/[^0-9]/g, '');
@@ -49,6 +51,7 @@ export default function LandingPage({ navigateTo }) {
   const caseStudies = (data?.caseStudies && data.caseStudies.length > 0) ? data.caseStudies : DEFAULT_LANDING_DATA.caseStudies;
   const testimonials = (data?.testimonials && data.testimonials.length > 0) ? data.testimonials : DEFAULT_LANDING_DATA.testimonials;
   const faqs = (data?.faqs && data.faqs.length > 0) ? data.faqs : DEFAULT_LANDING_DATA.faqs;
+  const about = data?.about || DEFAULT_LANDING_DATA.about;
 
   const lenisRef = useRef(null);
   const progressBarRef = useRef(null);
@@ -275,10 +278,11 @@ export default function LandingPage({ navigateTo }) {
     loadContent();
   }, []);
 
-  // 1. Smart Directional Navbar: Hide on scroll down, show on scroll up, gold hairline past hero
+  // 1. Smart Directional Navbar: Hide on scroll down, show on scroll up, gold hairline past hero + Scroll-Spy
   useEffect(() => {
     let lastScrollY = window.scrollY;
     let ticking = false;
+    const trackedIds = ['services', 'niches', 'process', 'results', 'about', 'why-us', 'faq'];
 
     const onScroll = () => {
       if (!ticking) {
@@ -304,6 +308,20 @@ export default function LandingPage({ navigateTo }) {
             }
           }
 
+          // Active-link scroll-spy
+          const spyOffset = window.innerHeight * 0.35;
+          let currentActive = '';
+          for (const id of trackedIds) {
+            const el = document.getElementById(id);
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              if (rect.top <= spyOffset && rect.bottom >= 120) {
+                currentActive = id;
+              }
+            }
+          }
+          setActiveSection(currentActive);
+
           lastScrollY = currentScrollY;
           ticking = false;
         });
@@ -312,6 +330,7 @@ export default function LandingPage({ navigateTo }) {
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -940,6 +959,98 @@ export default function LandingPage({ navigateTo }) {
         );
       }
 
+      // 9.5. About Us Section (Founder Block, Vertical Timeline, Values & Closing CTA)
+      const founderCards = gsap.utils.toArray('.about-founder-grid .motion-card');
+      if (founderCards.length) {
+        gsap.fromTo(founderCards,
+          { y: 36, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: 'power3.out',
+            stagger: 0.15,
+            scrollTrigger: {
+              trigger: '.about-founder-grid',
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                founderCards.forEach((card, i) => {
+                  setTimeout(() => card.classList.add('is-revealed'), i * 150);
+                });
+              }
+            }
+          }
+        );
+      }
+
+      const storyTimelineItems = gsap.utils.toArray('.about-story-timeline .motion-card');
+      if (storyTimelineItems.length) {
+        storyTimelineItems.forEach((item, idx) => {
+          gsap.fromTo(item,
+            { y: 38, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.75,
+              ease: 'power3.out',
+              scrollTrigger: {
+                trigger: item,
+                start: 'top 87%',
+                once: true,
+                onEnter: () => {
+                  setTimeout(() => item.classList.add('is-revealed'), idx * 80);
+                }
+              }
+            }
+          );
+        });
+      }
+
+      const aboutValueCards = gsap.utils.toArray('.about-values-grid .motion-card');
+      if (aboutValueCards.length) {
+        gsap.fromTo(aboutValueCards,
+          { y: 36, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.75,
+            ease: 'power3.out',
+            stagger: 0.12,
+            scrollTrigger: {
+              trigger: '.about-values-grid',
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                aboutValueCards.forEach((card, i) => {
+                  setTimeout(() => card.classList.add('is-revealed'), i * 120);
+                });
+              }
+            }
+          }
+        );
+      }
+
+      const aboutCtaBox = document.querySelector('.about-closing-cta.motion-card');
+      if (aboutCtaBox) {
+        gsap.fromTo(aboutCtaBox,
+          { scale: 0.96, opacity: 0, y: 24 },
+          {
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            duration: 0.75,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: aboutCtaBox,
+              start: 'top 88%',
+              once: true,
+              onEnter: () => aboutCtaBox.classList.add('is-revealed')
+            }
+          }
+        );
+      }
+
       // 10. Phonixe Difference (Why Us Highlight & 7 Points, data-motion="slide-right")
       const whyHighlight = document.querySelector('.why-brand-highlight.motion-card');
       if (whyHighlight) {
@@ -1271,12 +1382,13 @@ _Looking forward to discussing our 360° growth strategy!_`;
           {/* Desktop Nav */}
           <nav className="desktop-nav">
             <ul className="nav-links">
-              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Services</a></li>
-              <li><a href="#niches" onClick={(e) => handleNavClick(e, '#niches')}>Who We Serve</a></li>
-              <li><a href="#process" onClick={(e) => handleNavClick(e, '#process')}>Our System</a></li>
-              <li><a href="#results" onClick={(e) => handleNavClick(e, '#results')}>Case Studies</a></li>
-              <li><a href="#why-us" onClick={(e) => handleNavClick(e, '#why-us')}>Why Phonixe</a></li>
-              <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')}>FAQ</a></li>
+              <li><a href="#services" className={activeSection === 'services' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#services')}>Services</a></li>
+              <li><a href="#niches" className={activeSection === 'niches' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#niches')}>Who We Serve</a></li>
+              <li><a href="#process" className={activeSection === 'process' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#process')}>Our System</a></li>
+              <li><a href="#results" className={activeSection === 'results' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#results')}>Case Studies</a></li>
+              <li><a href="#about" className={activeSection === 'about' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#about')}>About</a></li>
+              <li><a href="#why-us" className={activeSection === 'why-us' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#why-us')}>Why Phonixe</a></li>
+              <li><a href="#faq" className={activeSection === 'faq' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#faq')}>FAQ</a></li>
             </ul>
           </nav>
 
@@ -1317,12 +1429,13 @@ _Looking forward to discussing our 360° growth strategy!_`;
         {/* Mobile Drawer */}
         <div className={`mobile-nav-drawer ${mobileMenuOpen ? 'open' : ''}`}>
           <ul className="mobile-nav-links">
-            <li><a href="#services" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#services'); }}>Services</a></li>
-            <li><a href="#niches" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#niches'); }}>Who We Serve</a></li>
-            <li><a href="#process" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#process'); }}>Our System</a></li>
-            <li><a href="#results" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#results'); }}>Case Studies</a></li>
-            <li><a href="#why-us" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#why-us'); }}>Why Phonixe</a></li>
-            <li><a href="#faq" className="mobile-link" onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#faq'); }}>FAQ</a></li>
+            <li><a href="#services" className={`mobile-link ${activeSection === 'services' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#services'); }}>Services</a></li>
+            <li><a href="#niches" className={`mobile-link ${activeSection === 'niches' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#niches'); }}>Who We Serve</a></li>
+            <li><a href="#process" className={`mobile-link ${activeSection === 'process' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#process'); }}>Our System</a></li>
+            <li><a href="#results" className={`mobile-link ${activeSection === 'results' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#results'); }}>Case Studies</a></li>
+            <li><a href="#about" className={`mobile-link ${activeSection === 'about' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#about'); }}>About</a></li>
+            <li><a href="#why-us" className={`mobile-link ${activeSection === 'why-us' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#why-us'); }}>Why Phonixe</a></li>
+            <li><a href="#faq" className={`mobile-link ${activeSection === 'faq' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#faq'); }}>FAQ</a></li>
           </ul>
           <div className="mobile-drawer-cta">
             <button className="btn btn-gold w-full" onClick={() => { setMobileMenuOpen(false); setIsModalOpen(true); }}>
@@ -1884,6 +1997,214 @@ _Looking forward to discussing our 360° growth strategy!_`;
         </div>
       </section>
 
+      {/* ABOUT US SECTION (OUR STORY) */}
+      <section className="about-section" id="about" aria-labelledby="about-heading">
+        {/* Structured Data: Organization & Founder Person JSON-LD */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": c.agencyName || "Phonixe Media",
+              "description": about.subheading,
+              "url": typeof window !== "undefined" ? window.location.origin : "https://phonixemedia.com",
+              "sameAs": [
+                about.founder?.socials?.instagram || igUrl,
+                about.founder?.socials?.linkedin || ""
+              ].filter(Boolean),
+              "founder": {
+                "@type": "Person",
+                "name": about.founder?.name || "Founder of Phonixe Media",
+                "jobTitle": about.founder?.title || "Founder & Creative Director, Phonixe Media"
+              }
+            })
+          }}
+        />
+
+        <div className="container">
+          {/* Section Header */}
+          <div className="section-header text-center reveal">
+            <span className="section-subtitle">{about.label || 'OUR STORY'}</span>
+            <h2 className="section-title" id="about-heading">
+              {about.headingPrefix || 'The Story Behind'}{' '}
+              <span className="text-italic-gold">{about.headingHighlight || 'Phonixe Media.'}</span>
+            </h2>
+            <p className="section-lead">{about.subheading}</p>
+          </div>
+
+          {/* 1. Founder Block (Two-Column on Desktop, Stacked on Mobile) */}
+          <div className="about-founder-grid">
+            {/* Left: Founder Photo Card */}
+            <figure className="founder-photo-card glass-card reveal motion-card card-spotlight" data-motion="rise">
+              <div className="card-light-sweep" aria-hidden="true" />
+              <div className="founder-photo-frame">
+                {!founderImgError && about.founder?.photoUrl ? (
+                  <img
+                    src={about.founder.photoUrl}
+                    alt={about.founder.photoAlt || `${about.founder.name} - ${about.founder.title}`}
+                    className="founder-photo-img"
+                    loading="lazy"
+                    width="480"
+                    height="560"
+                    onError={() => setFounderImgError(true)}
+                  />
+                ) : (
+                  <div className="founder-photo-placeholder" role="img" aria-label={about.founder?.photoAlt || 'Founder of Phonixe Media'}>
+                    <div className="founder-placeholder-glow" aria-hidden="true" />
+                    <img
+                      src="/assets/phoenix-badge.png"
+                      alt=""
+                      aria-hidden="true"
+                      className="founder-placeholder-emblem"
+                      loading="lazy"
+                      data-bird-hover
+                    />
+                    <span className="founder-placeholder-title">{about.founder?.name || 'Founder of Phonixe Media'}</span>
+                    <span className="founder-placeholder-subtitle">{about.founder?.title || 'Founder & Creative Director'}</span>
+                  </div>
+                )}
+                <div className="founder-photo-overlay" aria-hidden="true" />
+              </div>
+
+              <figcaption className="founder-photo-caption">
+                <span className="founder-badge-dot" aria-hidden="true" />
+                <span>{about.founder?.badgeText || 'Born From Rising High'}</span>
+              </figcaption>
+            </figure>
+
+            {/* Right: Founder Bio, Socials & Pull Quote */}
+            <div className="founder-bio-card glass-card reveal motion-card card-spotlight" data-motion="rise">
+              <div className="card-light-sweep" aria-hidden="true" />
+              <div className="founder-bio-header">
+                <div className="founder-identity">
+                  <span className="founder-eyebrow">LEADERSHIP & VISION</span>
+                  <h3 className="founder-name">{about.founder?.name || 'Founder of Phonixe Media'}</h3>
+                  <p className="founder-role">{about.founder?.title || 'Founder & Creative Director, Phonixe Media'}</p>
+                </div>
+
+                {/* Social Link Icons */}
+                {(about.founder?.socials?.instagram || about.founder?.socials?.linkedin) && (
+                  <div className="founder-socials" aria-label="Founder Social Links">
+                    {about.founder?.socials?.instagram && (
+                      <a
+                        href={about.founder.socials.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="founder-social-btn"
+                        aria-label="Instagram"
+                        title="Follow on Instagram"
+                        data-bird-hover
+                      >
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                      </a>
+                    )}
+                    {about.founder?.socials?.linkedin && (
+                      <a
+                        href={about.founder.socials.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="founder-social-btn"
+                        aria-label="LinkedIn"
+                        title="Connect on LinkedIn"
+                        data-bird-hover
+                      >
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                          <rect x="2" y="9" width="4" height="12"></rect>
+                          <circle cx="4" cy="4" r="2"></circle>
+                        </svg>
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="founder-bio-paragraphs">
+                {(about.founder?.bio || []).map((paragraph, pIdx) => (
+                  <p key={pIdx}>{paragraph}</p>
+                ))}
+              </div>
+
+              {about.founder?.quote && (
+                <blockquote className="founder-pull-quote">
+                  <span className="quote-mark" aria-hidden="true">“</span>
+                  <p className="text-italic-gold">"{about.founder.quote}"</p>
+                </blockquote>
+              )}
+            </div>
+          </div>
+
+          {/* 2. How It Started (Vertical Timeline) */}
+          <div className="about-timeline-wrapper">
+            <div className="about-sub-header text-center reveal">
+              <span className="section-subtitle">THE JOURNEY</span>
+              <h3 className="about-sub-title">{about.timelineHeading || 'How It Started'}</h3>
+              {about.timelineSubheading && (
+                <p className="about-sub-lead">{about.timelineSubheading}</p>
+              )}
+            </div>
+
+            <div className="about-story-timeline">
+              <div className="about-timeline-line" aria-hidden="true" />
+              {(about.timeline || []).map((milestone, mIdx) => (
+                <div className="about-timeline-item" key={mIdx}>
+                  <div className="about-timeline-node" data-bird-hover aria-hidden="true">
+                    <span>✦</span>
+                  </div>
+                  <div className="about-timeline-card process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
+                    <div className="card-light-sweep" aria-hidden="true" />
+                    <div className="about-timeline-meta">
+                      <div className="step-number-badge about-year-badge" data-bird-hover>{milestone.year}</div>
+                      {milestone.tag && <span className="step-tag">{milestone.tag}</span>}
+                    </div>
+                    <h3>{milestone.title}</h3>
+                    <p className="step-desc">{milestone.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. Mission & Values (3 Cards in a Row, Stacked on Mobile) */}
+          <div className="about-values-wrapper">
+            <div className="about-sub-header text-center reveal">
+              <span className="section-subtitle">WHAT DRIVES US</span>
+              <h3 className="about-sub-title">{about.valuesHeading || 'Mission & Core Values'}</h3>
+            </div>
+
+            <div className="about-values-grid">
+              {(about.values || []).map((val, vIdx) => (
+                <div className="about-value-card glass-card reveal motion-card card-spotlight" data-motion="rise" key={vIdx}>
+                  <div className="card-light-sweep" aria-hidden="true" />
+                  <div className="why-point-icon about-value-badge" data-bird-hover>
+                    {val.number || `0${vIdx + 1}`}
+                  </div>
+                  <h3>{val.title}</h3>
+                  <p>{val.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 4. Closing CTA */}
+          <div className="about-closing-cta process-guarantee-box glass-card reveal motion-card card-spotlight" data-motion="scale">
+            <div className="card-light-sweep" aria-hidden="true" />
+            <h3 className="about-cta-heading">{about.ctaPrompt || "Ready to write your brand's story?"}</h3>
+            <button className="btn btn-gold btn-large" onClick={() => setIsModalOpen(true)} data-magnetic-cta>
+              <span>{about.ctaButtonText || 'Book a Free Strategy Call'}</span>
+              <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
+                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* WHY PHONIXE MEDIA */}
       <section className="why-us-section" id="why-us">
         <div className="container">
@@ -2073,6 +2394,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
               <li><a href="#niches" onClick={(e) => handleNavClick(e, '#niches')}>Coaching Niches</a></li>
               <li><a href="#process" onClick={(e) => handleNavClick(e, '#process')}>Our 4-Step System</a></li>
               <li><a href="#results" onClick={(e) => handleNavClick(e, '#results')}>Case Studies</a></li>
+              <li><a href="#about" onClick={(e) => handleNavClick(e, '#about')}>About</a></li>
               <li><a href="#why-us" onClick={(e) => handleNavClick(e, '#why-us')}>Why Phonixe</a></li>
               <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')}>FAQ</a></li>
             </ul>

@@ -220,6 +220,26 @@ export const defaultBirdAnchors = [
     scale: 0.85,
     rotation: 0
   },
+  // 8.5. About Us (Our Story): perches on the founder photo card & timeline
+  {
+    id: 'about-founder',
+    selector: '.founder-photo-card',
+    side: 'top-right',
+    offsetX: -18,
+    offsetY: -26,
+    scale: 0.8,
+    rotation: 6,
+    glowPulse: true
+  },
+  {
+    id: 'about-timeline',
+    selector: '.about-story-timeline',
+    side: 'top',
+    offsetX: 0,
+    offsetY: -32,
+    scale: 0.78,
+    rotation: -4
+  },
   // 9. Phonixe Difference: flies to small emblem box ("Born From Rising High")
   {
     id: 'difference-emblem',
