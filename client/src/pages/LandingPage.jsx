@@ -2,107 +2,98 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import BirdLayer from '../components/BirdLayer';
+import {
+  Share2,
+  UserCheck,
+  Target,
+  Video,
+  TrendingUp,
+  Filter,
+  Palette,
+  Compass,
+  Sparkles,
+  Binary,
+  Flame,
+  HeartHandshake,
+  SunMedium,
+  CheckCircle2,
+  ChevronDown,
+  ArrowRight,
+  MessageCircle,
+  X
+} from 'lucide-react';
+
+import PhoenixGuide from '../components/phoenix/PhoenixGuide';
+import { SHOW_PLACEHOLDERS } from '../data/config';
+import { founderData } from '../data/founder';
+import { resultsData } from '../data/results';
+import { nichesData } from '../data/niches';
+import { servicesData } from '../data/services';
+import { processData } from '../data/process';
+import { whyUsData } from '../data/whyUs';
+import { caseStudiesData } from '../data/caseStudies';
+import { testimonialsData } from '../data/testimonials';
+import { faqData } from '../data/faq';
+import { legalData } from '../data/legal';
 import { api } from '../services/api';
-import { DEFAULT_LANDING_DATA } from '../data/defaultData';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Helper to cleanly parse and separate metric values and titles without text overlapping
-const parseMetric = (str, fallbackTitle) => {
-  if (!str) return { value: '-', label: fallbackTitle };
-  const trimmed = String(str).trim();
-  const match = trimmed.match(/^([+$€₹£]?[0-9]+(?:\.[0-9]+)?(?:[KkMmBxX%+]|\s*\+)?)\s*(.*)$/);
-  if (match && match[1]) {
-    const val = match[1].trim();
-    const rest = match[2] ? match[2].trim() : '';
-    return {
-      value: val,
-      label: rest || fallbackTitle
-    };
-  }
-  return {
-    value: trimmed,
-    label: fallbackTitle
-  };
+// Lucide Icon Resolver helper
+const iconMap = {
+  Share2,
+  UserCheck,
+  Target,
+  Video,
+  TrendingUp,
+  Filter,
+  Palette,
+  Compass,
+  Sparkles,
+  Binary,
+  Flame,
+  HeartHandshake,
+  SunMedium
 };
 
-export default function LandingPage({ navigateTo }) {
-  const [data, setData] = useState(DEFAULT_LANDING_DATA);
-  const [loading, setLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalSuccess, setModalSuccess] = useState(false);
-  const [whatsappLink, setWhatsappLink] = useState('#');
+export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isNavHidden, setIsNavHidden] = useState(false);
+  const [activeSection, setActiveSection] = useState('hero');
   const [isPastHero, setIsPastHero] = useState(false);
-  const [activeSection, setActiveSection] = useState('');
-  const [founderImgError, setFounderImgError] = useState(false);
+  const [isContactInView, setIsContactInView] = useState(false);
 
-  const c = data?.content || {};
-  const cleanWa = (c.whatsappNumber || '+91 8799690069').replace(/[^0-9]/g, '');
-  const contactEmail = c.email || 'phonixemedia@gmail.com';
-  const igHandle = c.instagramHandle || '@phonixe.media';
-  const igUrl = c.instagramUrl || 'https://www.instagram.com/phonixe.media/';
-  const stats = (data?.stats && data.stats.length > 0) ? data.stats : DEFAULT_LANDING_DATA.stats;
-  const services = (data?.services && data.services.length > 0) ? data.services : DEFAULT_LANDING_DATA.services;
-  const caseStudies = (data?.caseStudies && data.caseStudies.length > 0) ? data.caseStudies : DEFAULT_LANDING_DATA.caseStudies;
-  const testimonials = (data?.testimonials && data.testimonials.length > 0) ? data.testimonials : DEFAULT_LANDING_DATA.testimonials;
-  const faqs = (data?.faqs && data.faqs.length > 0) ? data.faqs : DEFAULT_LANDING_DATA.faqs;
-  const about = data?.about || DEFAULT_LANDING_DATA.about;
-
-  const lenisRef = useRef(null);
-  const progressBarRef = useRef(null);
-  const chartPathRef = useRef(null);
-  const reelViewsRef = useRef(null);
+  // Legal Modal State
+  const [legalModalContent, setLegalModalContent] = useState(null);
 
   // Form State
   const [formState, setFormState] = useState({
     name: '',
     whatsapp: '',
-    instagram: '',
     niche: '',
-    goal: 'Generate more high-paying 1-on-1 clients',
+    service: 'Social Media Management',
+    instagram: '',
     message: ''
   });
   const [submitting, setSubmitting] = useState(false);
+  const [formSuccess, setFormSuccess] = useState(false);
 
-  // Pause Lenis smooth scroll and lock background body scroll while booking modal is open
-  useEffect(() => {
-    if (isModalOpen) {
-      if (lenisRef.current) {
-        lenisRef.current.stop();
-      }
-      document.body.style.overflow = 'hidden';
-    } else {
-      if (lenisRef.current) {
-        lenisRef.current.start();
-      }
-      document.body.style.overflow = '';
-    }
-    return () => {
-      if (lenisRef.current) {
-        lenisRef.current.start();
-      }
-      document.body.style.overflow = '';
-    };
-  }, [isModalOpen]);
+  const lenisRef = useRef(null);
+  const nameInputRef = useRef(null);
 
-  // 1. Lenis Smooth Scroll Setup synced with GSAP & Scroll-to-Top on Refresh
+  const cleanWaNumber = '918799690069';
+  const displayWaNumber = '+91 8799690069';
+  const agencyEmail = 'phonixemedia@gmail.com';
+  const igHandle = '@phonixe.media';
+  const igUrl = 'https://www.instagram.com/phonixe.media/';
+
+  // 1. Lenis Smooth Scroll Setup
   useEffect(() => {
-    // Force manual scroll restoration so browsers do not restore scroll down the page on refresh
     if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
     }
     window.scrollTo(0, 0);
-
-    const handleBeforeUnload = () => {
-      window.scrollTo(0, 0);
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('pagehide', handleBeforeUnload);
 
     const lenis = new Lenis({
       lerp: 0.08,
@@ -112,1305 +103,237 @@ export default function LandingPage({ navigateTo }) {
     });
     lenisRef.current = lenis;
 
-    // Immediately clamp Lenis virtual scroll to top
-    lenis.scrollTo(0, { immediate: true });
-
-    // Sync Lenis scroll with GSAP ScrollTrigger and BirdLayer
-    lenis.on('scroll', (e) => {
+    lenis.on('scroll', () => {
       ScrollTrigger.update();
-      if (typeof window.__phonixeScrollCallback === 'function') {
-        const s = typeof e?.scroll === 'number' ? e.scroll : window.scrollY;
-        window.__phonixeScrollCallback(s);
-      }
     });
+
     const tickerCallback = (time) => lenis.raf(time * 1000);
     gsap.ticker.add(tickerCallback);
     gsap.ticker.lagSmoothing(0);
 
-    // Refresh ScrollTrigger and re-ensure top position after initial render
-    requestAnimationFrame(() => {
-      window.scrollTo(0, 0);
-      lenis.scrollTo(0, { immediate: true });
-      ScrollTrigger.refresh();
-    });
-
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('pagehide', handleBeforeUnload);
       gsap.ticker.remove(tickerCallback);
       lenis.destroy();
       lenisRef.current = null;
     };
   }, []);
 
-  // Smooth scroll to top handler
-  const scrollToTop = useCallback(() => {
+  // Smooth scroll handler
+  const scrollTo = useCallback((targetId) => {
+    const el = document.querySelector(targetId);
+    if (!el) return;
     if (lenisRef.current) {
-      lenisRef.current.scrollTo(0, {
-        duration: 1.1,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        onComplete: () => {
-          ScrollTrigger.update();
-        }
-      });
+      lenisRef.current.scrollTo(el, { offset: -70 });
     } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      el.scrollIntoView({ behavior: 'smooth' });
     }
+    setMobileMenuOpen(false);
   }, []);
 
-  // Smooth scroll handler for anchor links
-  const handleNavClick = (e, targetId) => {
-    e.preventDefault();
-    if (targetId === '#hero') {
-      scrollToTop();
-      return;
-    }
-    const targetEl = document.querySelector(targetId);
-    if (!targetEl) return;
-    if (lenisRef.current) {
-      lenisRef.current.scrollTo(targetEl, { offset: -70 });
-    } else {
-      targetEl.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  // 2. Thin Gold Scroll-Progress Line under Navbar
-  useEffect(() => {
-    const progressTrigger = ScrollTrigger.create({
-      trigger: '.landing-page-root',
-      start: 'top top',
-      end: 'bottom bottom',
-      onUpdate: (self) => {
-        if (progressBarRef.current) {
-          gsap.set(progressBarRef.current, { scaleX: self.progress });
-        }
+  // Focus Form from CTA
+  const handleBookCallClick = useCallback((e) => {
+    if (e) e.preventDefault();
+    scrollTo('#contact');
+    setTimeout(() => {
+      if (nameInputRef.current) {
+        nameInputRef.current.focus();
       }
-    });
+    }, 700);
+  }, [scrollTo]);
 
-    return () => progressTrigger.kill();
-  }, []);
-
-  // 3. Ambient Glow Parallax (±40px)
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.to('.glow-top', {
-        y: -40,
-        scrollTrigger: {
-          trigger: '.landing-page-root',
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 1.5
-        }
-      });
-      gsap.to('.glow-middle', {
-        y: 40,
-        scrollTrigger: {
-          trigger: '.landing-page-root',
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 2
-        }
-      });
-      gsap.to('.glow-bottom', {
-        y: -35,
-        scrollTrigger: {
-          trigger: '.landing-page-root',
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 1.5
-        }
-      });
-    });
-
-    return () => ctx.revert();
-  }, []);
-
-  // 4. Scroll Reveal Animations with IntersectionObserver
-  useEffect(() => {
-    const rootEl = document.querySelector('.landing-page-root');
-    if (rootEl) rootEl.classList.add('js-reveal-active');
-
-    const revealEls = document.querySelectorAll('.reveal');
-    
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries, obs) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('active');
-            obs.unobserve(entry.target);
-          }
-        });
-      }, { rootMargin: '0px 0px -30px 0px', threshold: 0.05 });
-
-      revealEls.forEach(el => observer.observe(el));
-
-      return () => {
-        observer.disconnect();
-      };
-    } else {
-      revealEls.forEach(el => el.classList.add('active'));
-    }
-  }, [data]);
-
-  // 5. Hero Chart Path Draw Animation
-  useEffect(() => {
-    if (chartPathRef.current) {
-      setTimeout(() => {
-        if (chartPathRef.current) {
-          chartPathRef.current.style.strokeDashoffset = '0';
-        }
-      }, 500);
-    }
-  }, []);
-
-  // Load Content from Backend API
-  useEffect(() => {
-    const loadContent = async () => {
-      try {
-        const bundle = await api.getLandingContent();
-        setData(bundle);
-      } catch (err) {
-        console.warn('Could not connect to backend API, using fallback data:', err.message);
-      } finally {
-        setLoading(false);
+  // Preselect service and scroll to contact
+  const handleEnquireService = useCallback((serviceTitle) => {
+    setFormState(prev => ({ ...prev, service: serviceTitle }));
+    scrollTo('#contact');
+    setTimeout(() => {
+      if (nameInputRef.current) {
+        nameInputRef.current.focus();
       }
-    };
-    loadContent();
-  }, []);
+    }, 700);
+  }, [scrollTo]);
 
-  // 1. Smart Directional Navbar: Hide on scroll down, show on scroll up, gold hairline past hero + Scroll-Spy
+  // 2. Scroll Spy & Visibility Tracking
   useEffect(() => {
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-    const trackedIds = ['services', 'niches', 'process', 'results', 'about', 'why-us', 'faq'];
+    const navSections = ['founder', 'results', 'services', 'process', 'why', 'faq', 'contact'];
 
-    const onScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          const heroEl = document.getElementById('hero');
-          const heroHeight = heroEl ? heroEl.offsetHeight : 650;
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 40);
 
-          setIsScrolled(currentScrollY > 40);
-          const pastHero = currentScrollY > (heroHeight - 90);
-          setIsPastHero(pastHero);
+      const heroEl = document.getElementById('hero');
+      const heroHeight = heroEl ? heroEl.offsetHeight : 650;
+      setIsPastHero(scrollY > heroHeight - 120);
 
-          if (!pastHero) {
-            setIsNavHidden(false);
-          } else {
-            const diff = currentScrollY - lastScrollY;
-            if (diff > 8 && currentScrollY > heroHeight + 60) {
-              // Scrolling down past hero -> hide navbar
-              setIsNavHidden(true);
-            } else if (diff < -8) {
-              // Scrolling up -> reveal navbar
-              setIsNavHidden(false);
-            }
+      const contactEl = document.getElementById('contact');
+      if (contactEl) {
+        const cRect = contactEl.getBoundingClientRect();
+        setIsContactInView(cRect.top <= window.innerHeight * 0.85);
+      }
+
+      // Active Section Scroll-Spy
+      const spyThreshold = window.innerHeight * 0.35;
+      for (const id of navSections) {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= spyThreshold && rect.bottom >= 120) {
+            setActiveSection(id);
           }
-
-          // Active-link scroll-spy
-          const spyOffset = window.innerHeight * 0.35;
-          let currentActive = '';
-          for (const id of trackedIds) {
-            const el = document.getElementById(id);
-            if (el) {
-              const rect = el.getBoundingClientRect();
-              if (rect.top <= spyOffset && rect.bottom >= 120) {
-                currentActive = id;
-              }
-            }
-          }
-          setActiveSection(currentActive);
-
-          lastScrollY = currentScrollY;
-          ticking = false;
-        });
-        ticking = true;
+        }
       }
     };
 
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 2. Color-Temperature Story: Harsh Reality Muted & Banner Ignite
+  // 3. Meet the Founder Staggered Reveal Animations
   useEffect(() => {
     const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (isReduced) return;
 
-    let hasIgnited = false;
-
-    const checkColorTemperature = () => {
-      const problemSec = document.getElementById('problem');
-      const bannerEl = document.querySelector('.problem-transition-banner');
-      const ambientGlows = document.querySelectorAll('.ambient-glow');
-      const problemCards = document.querySelectorAll('.problem-card');
-      const birdWrapper = document.querySelector('.phoenix-bird-wrapper');
-
-      if (!problemSec || !bannerEl) return;
-
-      const problemRect = problemSec.getBoundingClientRect();
-      const bannerRect = bannerEl.getBoundingClientRect();
-      const vh = window.innerHeight;
-
-      // Banner enters viewport: ignite everything back to full gold
-      if (bannerRect.top <= vh * 0.85) {
-        if (!hasIgnited) {
-          hasIgnited = true;
-          ambientGlows.forEach(g => {
-            g.classList.remove('ambient-muted');
-            g.classList.add('ambient-ignited');
-          });
-          if (birdWrapper) {
-            birdWrapper.classList.remove('bird-muted');
-            birdWrapper.classList.add('bird-ignited');
-          }
-          bannerEl.classList.add('ignite-gold-pulse');
-          problemCards.forEach(card => card.classList.add('problem-faded'));
-
-          setTimeout(() => {
-            ambientGlows.forEach(g => g.classList.remove('ambient-ignited'));
-            if (birdWrapper) birdWrapper.classList.remove('bird-ignited');
-          }, 1200);
-        }
-      } else if (problemRect.top <= vh * 0.55 && problemRect.bottom >= vh * 0.2) {
-        // Inside problem section before the rescue banner: muted cool tone
-        if (!hasIgnited) {
-          ambientGlows.forEach(g => g.classList.add('ambient-muted'));
-          if (birdWrapper) birdWrapper.classList.add('bird-muted');
-        }
-      } else if (problemRect.top > vh * 0.75) {
-        // Above problem section: reset to initial warmth
-        hasIgnited = false;
-        ambientGlows.forEach(g => {
-          g.classList.remove('ambient-muted');
-          g.classList.remove('ambient-ignited');
-        });
-        if (birdWrapper) {
-          birdWrapper.classList.remove('bird-muted');
-          birdWrapper.classList.remove('bird-ignited');
-        }
-        problemCards.forEach(card => card.classList.remove('problem-faded'));
-        bannerEl.classList.remove('ignite-gold-pulse');
-      }
-    };
-
-    window.addEventListener('scroll', checkColorTemperature, { passive: true });
-    checkColorTemperature();
-
-    return () => window.removeEventListener('scroll', checkColorTemperature);
-  }, [data]);
-
-  // 3. Hero Depth: Floating Cards Parallax (Desktop Only >= 1024px)
-  useEffect(() => {
-    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (isReduced) return;
-
-    const reelCard = document.querySelector('.mockup-reel-floating');
-    const convBadge = document.querySelector('.floating-conversion-badge');
-    if (!reelCard && !convBadge) return;
-
-    const onScroll = () => {
-      if (window.innerWidth < 1024) {
-        if (convBadge) convBadge.style.transform = '';
-        if (reelCard) reelCard.style.removeProperty('--reel-parallax-y');
-        return;
-      }
-      const y = window.scrollY;
-      if (y > 800) return;
-      if (reelCard) {
-        reelCard.style.setProperty('--reel-parallax-y', `${y * -0.08}px`);
-      }
-      if (convBadge) {
-        convBadge.style.transform = `translateY(${y * -0.18}px)`;
-      }
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
-  }, []);
-
-  // Reel Views Count-Up Animation (0 to 6.9M once on scroll into view)
-  useEffect(() => {
-    const el = reelViewsRef.current;
-    const cardEl = document.querySelector('.mockup-reel-floating');
-    if (!el || !cardEl) return;
-
-    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (isReduced) {
-      el.textContent = '6.9M';
-      return;
-    }
-
-    const counter = { val: 0 };
-    const trigger = ScrollTrigger.create({
-      trigger: cardEl,
-      start: 'top 92%',
-      once: true,
-      onEnter: () => {
-        gsap.to(counter, {
-          val: 6.9,
-          duration: 1.25,
-          ease: 'power2.out',
-          onUpdate: () => {
-            if (el) el.textContent = `${counter.val.toFixed(1)}M`;
-          }
-        });
-      }
-    });
-
-    ScrollTrigger.refresh();
-
-    return () => trigger.kill();
-  }, []);
-
-  // 4. Proven Results: Per-case sequential reveal & 3 stats count-up
-  useEffect(() => {
-    const caseCards = document.querySelectorAll('.case-card');
-    if (!caseCards.length) return;
-
-    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (isReduced) {
-      caseCards.forEach(card => {
-        card.querySelector('.case-box-starting')?.classList.add('revealed');
-        card.querySelector('.case-box-strategy')?.classList.add('revealed');
-        card.querySelector('.case-metrics-row')?.classList.add('revealed');
-      });
-      return;
-    }
-
-    const animateNumber = (el, targetStr, duration = 1100) => {
-      if (!el || !targetStr || targetStr === '-') return;
-      const trimmed = String(targetStr).trim();
-      const regex = /^([^0-9.]*)([0-9]+(?:\.[0-9]+)?)(.*)$/;
-      const match = trimmed.match(regex);
-      if (!match) return;
-
-      const prefix = match[1] || '';
-      const targetNum = parseFloat(match[2]);
-      const suffix = match[3] || '';
-      const isFloat = match[2].includes('.');
-
-      const startTime = performance.now();
-      const step = (currentTime) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(1, elapsed / duration);
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        const currentVal = targetNum * easeOut;
-
-        const formatted = isFloat ? currentVal.toFixed(1) : Math.round(currentVal).toLocaleString();
-        el.textContent = `${prefix}${formatted}${suffix}`;
-
-        if (progress < 1) {
-          requestAnimationFrame(step);
-        } else {
-          el.textContent = trimmed;
-        }
-      };
-      requestAnimationFrame(step);
-    };
-
-    const observer = new IntersectionObserver((entries, obs) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const card = entry.target;
-          obs.unobserve(card);
-
-          // 1. Reveal Starting Point
-          const boxStart = card.querySelector('.case-box-starting');
-          if (boxStart) boxStart.classList.add('revealed');
-
-          // 2. Reveal Phonixe Strategy sliding up ~220ms later
-          setTimeout(() => {
-            const boxStrat = card.querySelector('.case-box-strategy');
-            if (boxStrat) boxStrat.classList.add('revealed');
-          }, 240);
-
-          // 3. Reveal and count up the 3 stats ~460ms later
-          setTimeout(() => {
-            const metricsRow = card.querySelector('.case-metrics-row');
-            if (metricsRow) metricsRow.classList.add('revealed');
-
-            const numberEls = card.querySelectorAll('.metric-number');
-            numberEls.forEach(numEl => {
-              const target = numEl.getAttribute('data-target-metric') || numEl.textContent;
-              animateNumber(numEl, target);
-            });
-          }, 480);
-        }
-      });
-    }, { rootMargin: '0px 0px -40px 0px', threshold: 0.15 });
-
-    caseCards.forEach(c => observer.observe(c));
-
-    return () => observer.disconnect();
-  }, [data]);
-
-  // 5. Magnetic Primary CTAs (Desktop Only - up to 8px toward cursor)
-  useEffect(() => {
-    const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches && window.innerWidth >= 768;
-    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!isDesktop || isReduced) return;
-
-    const buttons = document.querySelectorAll('[data-magnetic-cta]');
-    if (!buttons.length) return;
-
-    const handlers = [];
-
-    buttons.forEach((btn) => {
-      const onMouseMove = (e) => {
-        const rect = btn.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const dx = e.clientX - centerX;
-        const dy = e.clientY - centerY;
-
-        const maxDist = 8;
-        const moveX = Math.max(-maxDist, Math.min(maxDist, dx * 0.22));
-        const moveY = Math.max(-maxDist, Math.min(maxDist, dy * 0.22));
-
-        gsap.to(btn, {
-          x: moveX,
-          y: moveY,
-          duration: 0.25,
-          ease: 'power2.out',
-          overwrite: 'auto'
-        });
-      };
-
-      const onMouseLeave = () => {
-        gsap.to(btn, {
-          x: 0,
-          y: 0,
-          duration: 0.5,
-          ease: 'elastic.out(1, 0.4)',
-          overwrite: 'auto'
-        });
-      };
-
-      btn.addEventListener('mousemove', onMouseMove);
-      btn.addEventListener('mouseleave', onMouseLeave);
-      handlers.push({ btn, onMouseMove, onMouseLeave });
-    });
-
-    return () => {
-      handlers.forEach(({ btn, onMouseMove, onMouseLeave }) => {
-        btn.removeEventListener('mousemove', onMouseMove);
-        btn.removeEventListener('mouseleave', onMouseLeave);
-        gsap.set(btn, { x: 0, y: 0 });
-      });
-    };
-  }, [data]);
-
-  // 6. Card Spotlight (Desktop Only - soft gold radial glow follows cursor along card borders)
-  useEffect(() => {
-    const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches && window.innerWidth >= 768;
-    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!isDesktop || isReduced) return;
-
-    const cards = document.querySelectorAll('.card-spotlight');
-    if (!cards.length) return;
-
-    const handlers = [];
-
-    cards.forEach((card) => {
-      const onMouseMove = (e) => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        card.style.setProperty('--mouse-x', `${x}px`);
-        card.style.setProperty('--mouse-y', `${y}px`);
-      };
-
-      card.addEventListener('mousemove', onMouseMove, { passive: true });
-      handlers.push({ card, onMouseMove });
-    });
-
-    return () => {
-      handlers.forEach(({ card, onMouseMove }) => {
-        card.removeEventListener('mousemove', onMouseMove);
-      });
-    };
-  }, [data]);
-
-  // 7. Container (Card) Scroll-Animation System (.motion-card) across 12 Sections
-  useEffect(() => {
-    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (isReduced) {
-      document.querySelectorAll('.motion-card').forEach(el => {
-        el.classList.add('is-revealed');
-        gsap.set(el, { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0, clearProps: 'transform,opacity' });
-      });
-      return;
-    }
-
-    const isMobile = window.innerWidth < 768;
+    const founderEl = document.getElementById('founder');
+    if (!founderEl) return;
 
     const ctx = gsap.context(() => {
-      if (isMobile) {
-        // Mobile: Simple fade-up with no tilt or parallax
-        const allMotionCards = gsap.utils.toArray('.motion-card');
-        allMotionCards.forEach((card) => {
-          gsap.fromTo(card,
-            { y: 25, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.65,
-              ease: 'power3.out',
-              scrollTrigger: {
-                trigger: card,
-                start: 'top 85%',
-                once: true,
-                onEnter: () => card.classList.add('is-revealed')
-              }
-            }
-          );
-        });
-        return;
-      }
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#founder',
+          start: 'top 80%',
+          once: true
+        }
+      });
 
-      // Desktop Choreography:
-      // 1. Hero Dashboard Mockup (data-motion="scale")
-      const heroMockup = document.querySelector('.growth-dashboard-mockup.motion-card');
-      if (heroMockup) {
-        gsap.fromTo(heroMockup,
-          { scale: 0.94, opacity: 0, y: 25 },
-          {
-            scale: 1,
-            opacity: 1,
-            y: 0,
-            duration: 0.85,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: heroMockup,
-              start: 'top 88%',
-              once: true,
-              onEnter: () => heroMockup.classList.add('is-revealed')
-            }
-          }
-        );
-      }
-
-      // 2. Measurable Impact (4 Stat Cards, data-motion="rise")
-      const statCards = gsap.utils.toArray('.stats-grid .motion-card');
-      if (statCards.length) {
-        gsap.fromTo(statCards,
-          { y: 40, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.75,
-            ease: 'power3.out',
-            stagger: 0.09,
-            scrollTrigger: {
-              trigger: '.stats-grid',
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                statCards.forEach((card, i) => {
-                  setTimeout(() => {
-                    card.classList.add('is-revealed');
-                    card.querySelector('.stat-icon-wrapper')?.classList.add('icon-pop');
-                  }, i * 90);
-                });
-              }
-            }
-          }
-        );
-      }
-
-      // 3. Who We Serve (6 Niche Cards, data-motion="fan")
-      const nicheCards = gsap.utils.toArray('.niche-cards-grid .motion-card');
-      if (nicheCards.length) {
-        nicheCards.forEach((card, idx) => {
-          const col = idx % 3;
-          let initX = 0;
-          let initRot = 0;
-          if (col === 0) { initX = -32; initRot = -2; }
-          else if (col === 2) { initX = 32; initRot = 2; }
-
-          gsap.fromTo(card,
-            { x: initX, y: 35, opacity: 0, rotation: initRot, scale: 0.97 },
-            {
-              x: 0,
-              y: 0,
-              opacity: 1,
-              rotation: 0,
-              scale: 1,
-              duration: 0.8,
-              ease: 'power3.out',
-              delay: (idx % 3) * 0.09 + Math.floor(idx / 3) * 0.12,
-              scrollTrigger: {
-                trigger: '.niche-cards-grid',
-                start: 'top 85%',
-                once: true,
-                onEnter: () => {
-                  setTimeout(() => {
-                    card.classList.add('is-revealed');
-                    const tags = card.querySelectorAll('.niche-focus-tags span');
-                    tags.forEach((tag, ti) => {
-                      tag.style.opacity = '0';
-                      tag.style.transform = 'scale(0.8)';
-                      setTimeout(() => {
-                        tag.style.transition = 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
-                        tag.style.opacity = '1';
-                        tag.style.transform = 'scale(1)';
-                      }, ti * 60 + 100);
-                    });
-                  }, idx * 80);
-                }
-              }
-            }
-          );
-        });
-      }
-
-      // 4. Harsh Reality (6 Problem Cards, data-motion="tilt")
-      const problemCards = gsap.utils.toArray('.problems-grid .motion-card');
-      if (problemCards.length) {
-        gsap.fromTo(problemCards,
-          { y: 35, opacity: 0, rotateX: 6, rotateY: -6, transformPerspective: 800 },
-          {
-            y: 0,
-            opacity: 1,
-            rotateX: 0,
-            rotateY: 0,
-            duration: 0.8,
-            ease: 'power3.out',
-            stagger: 0.08,
-            scrollTrigger: {
-              trigger: '.problems-grid',
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                problemCards.forEach((card, i) => {
-                  setTimeout(() => {
-                    card.classList.add('is-revealed');
-                    card.querySelector('.problem-icon')?.classList.add('icon-shake');
-                  }, i * 80 + 300);
-                });
-              }
-            }
-          }
-        );
-      }
-
-      // 5. Rescue Banner & 2-3 Hours Guarantee Box (data-motion="scale")
-      const rescueBanner = document.querySelector('.problem-transition-banner.motion-card');
-      if (rescueBanner) {
-        gsap.fromTo(rescueBanner,
-          { scale: 0.96, opacity: 0, y: 25 },
-          {
-            scale: 1,
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: rescueBanner,
-              start: 'top 85%',
-              once: true,
-              onEnter: () => rescueBanner.classList.add('is-revealed')
-            }
-          }
-        );
-      }
-
-      const guaranteeBox = document.querySelector('.process-guarantee-box.motion-card');
-      if (guaranteeBox) {
-        gsap.fromTo(guaranteeBox,
-          { scale: 0.96, opacity: 0, y: 25 },
-          {
-            scale: 1,
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: guaranteeBox,
-              start: 'top 85%',
-              once: true,
-              onEnter: () => guaranteeBox.classList.add('is-revealed')
-            }
-          }
-        );
-      }
-
-      // 6. Services Suite (4 Cards, data-motion="rise")
-      const serviceCards = gsap.utils.toArray('.services-grid .motion-card');
-      if (serviceCards.length) {
-        gsap.fromTo(serviceCards,
-          { y: 40, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.8,
-            ease: 'power3.out',
-            stagger: 0.1,
-            scrollTrigger: {
-              trigger: '.services-grid',
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                serviceCards.forEach((card, i) => {
-                  setTimeout(() => {
-                    card.classList.add('is-revealed');
-                    const features = card.querySelectorAll('.service-features li');
-                    gsap.fromTo(features,
-                      { opacity: 0, x: -8 },
-                      { opacity: 1, x: 0, duration: 0.45, ease: 'power2.out', stagger: 0.05 }
-                    );
-                  }, i * 100);
-                });
-              }
-            }
-          }
-        );
-      }
-
-      // 7. 4-Step Growth System (Cards, data-motion="rise")
-      const stepCards = gsap.utils.toArray('.process-timeline .motion-card');
-      if (stepCards.length) {
-        gsap.fromTo(stepCards,
-          { y: 35, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.75,
-            ease: 'power3.out',
-            stagger: 0.1,
-            scrollTrigger: {
-              trigger: '.process-timeline',
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                stepCards.forEach((card, i) => {
-                  setTimeout(() => card.classList.add('is-revealed'), i * 100);
-                });
-              }
-            }
-          }
-        );
-      }
-
-      // 8. Proven Results (3 Case Cards, data-motion="scale")
-      const caseCards = gsap.utils.toArray('.case-studies-grid .motion-card');
-      if (caseCards.length) {
-        caseCards.forEach((card, idx) => {
-          const isMiddle = idx === 1;
-          gsap.fromTo(card,
-            { y: 35, opacity: 0, scale: isMiddle ? 0.98 : 0.95 },
-            {
-              y: 0,
-              opacity: 1,
-              scale: isMiddle ? 1.025 : 1,
-              duration: 0.85,
-              ease: 'power3.out',
-              delay: idx * 0.12,
-              scrollTrigger: {
-                trigger: '.case-studies-grid',
-                start: 'top 85%',
-                once: true,
-                onEnter: () => {
-                  setTimeout(() => card.classList.add('is-revealed'), idx * 120);
-                }
-              }
-            }
-          );
-        });
-      }
-
-      // 9. Testimonials (3 Cards, data-motion="rise")
-      const testimonialCards = gsap.utils.toArray('.testimonials-grid .motion-card');
-      if (testimonialCards.length) {
-        gsap.fromTo(testimonialCards,
-          { y: 40, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.8,
-            ease: 'power3.out',
-            stagger: 0.12,
-            scrollTrigger: {
-              trigger: '.testimonials-grid',
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                testimonialCards.forEach((card, i) => {
-                  setTimeout(() => {
-                    card.classList.add('is-revealed');
-                    card.querySelector('.placeholder-avatar')?.classList.add('avatar-rotated');
-                    const stars = card.querySelectorAll('.stars-row .star-char');
-                    stars.forEach((s, si) => {
-                      setTimeout(() => s.classList.add('star-pop'), si * 75);
-                    });
-                  }, i * 120);
-                });
-              }
-            }
-          }
-        );
-      }
-
-      // 9.5. About Us Section (Founder Block, Vertical Timeline, Values & Closing CTA)
-      const founderCards = gsap.utils.toArray('.about-founder-grid .motion-card');
-      if (founderCards.length) {
-        gsap.fromTo(founderCards,
-          { y: 36, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.8,
-            ease: 'power3.out',
-            stagger: 0.15,
-            scrollTrigger: {
-              trigger: '.about-founder-grid',
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                founderCards.forEach((card, i) => {
-                  setTimeout(() => card.classList.add('is-revealed'), i * 150);
-                });
-              }
-            }
-          }
-        );
-      }
-
-      const storyTimelineItems = gsap.utils.toArray('.about-story-timeline .motion-card');
-      if (storyTimelineItems.length) {
-        storyTimelineItems.forEach((item, idx) => {
-          gsap.fromTo(item,
-            { y: 38, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.75,
-              ease: 'power3.out',
-              scrollTrigger: {
-                trigger: item,
-                start: 'top 87%',
-                once: true,
-                onEnter: () => {
-                  setTimeout(() => item.classList.add('is-revealed'), idx * 80);
-                }
-              }
-            }
-          );
-        });
-      }
-
-      const aboutValueCards = gsap.utils.toArray('.about-values-grid .motion-card');
-      if (aboutValueCards.length) {
-        gsap.fromTo(aboutValueCards,
-          { y: 36, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.75,
-            ease: 'power3.out',
-            stagger: 0.12,
-            scrollTrigger: {
-              trigger: '.about-values-grid',
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                aboutValueCards.forEach((card, i) => {
-                  setTimeout(() => card.classList.add('is-revealed'), i * 120);
-                });
-              }
-            }
-          }
-        );
-      }
-
-      const aboutCtaBox = document.querySelector('.about-closing-cta.motion-card');
-      if (aboutCtaBox) {
-        gsap.fromTo(aboutCtaBox,
-          { scale: 0.96, opacity: 0, y: 24 },
-          {
-            scale: 1,
-            opacity: 1,
-            y: 0,
-            duration: 0.75,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: aboutCtaBox,
-              start: 'top 88%',
-              once: true,
-              onEnter: () => aboutCtaBox.classList.add('is-revealed')
-            }
-          }
-        );
-      }
-
-      // 10. Phonixe Difference (Why Us Highlight & 7 Points, data-motion="slide-right")
-      const whyHighlight = document.querySelector('.why-brand-highlight.motion-card');
-      if (whyHighlight) {
-        gsap.fromTo(whyHighlight,
-          { scale: 0.95, opacity: 0, y: 20 },
-          {
-            scale: 1,
-            opacity: 1,
-            y: 0,
-            duration: 0.75,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: whyHighlight,
-              start: 'top 85%',
-              once: true,
-              onEnter: () => whyHighlight.classList.add('is-revealed')
-            }
-          }
-        );
-      }
-
-      const whyPoints = gsap.utils.toArray('.why-us-points .motion-card');
-      if (whyPoints.length) {
-        gsap.fromTo(whyPoints,
-          { x: 45, opacity: 0 },
-          {
-            x: 0,
-            opacity: 1,
-            duration: 0.7,
-            ease: 'power3.out',
-            stagger: 0.08,
-            scrollTrigger: {
-              trigger: '.why-us-points',
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                whyPoints.forEach((point, i) => {
-                  setTimeout(() => {
-                    point.classList.add('is-revealed');
-                    point.querySelector('.why-point-icon')?.classList.add('icon-tick');
-                  }, i * 80);
-                });
-              }
-            }
-          }
-        );
-      }
-
-      // 11. FAQ Accordion (8 Items, data-motion="rise")
-      const faqCards = gsap.utils.toArray('.faq-accordion-container .motion-card');
-      if (faqCards.length) {
-        gsap.fromTo(faqCards,
-          { y: 30, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.65,
-            ease: 'power3.out',
-            stagger: 0.07,
-            scrollTrigger: {
-              trigger: '.faq-accordion-container',
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                faqCards.forEach((f, i) => {
-                  setTimeout(() => f.classList.add('is-revealed'), i * 70);
-                });
-              }
-            }
-          }
-        );
-      }
-
-      // 12. Final CTA Banner (data-motion="scale")
-      const ctaBanner = document.querySelector('.cta-banner-wrapper.motion-card');
-      if (ctaBanner) {
-        const ctaButtons = ctaBanner.querySelectorAll('.cta-buttons-row .btn, .cta-buttons-row a');
-        gsap.fromTo(ctaBanner,
-          { scale: 0.95, opacity: 0, y: 30 },
-          {
-            scale: 1,
-            opacity: 1,
-            y: 0,
-            duration: 0.85,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: ctaBanner,
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                ctaBanner.classList.add('is-revealed');
-                ctaBanner.classList.add('has-ember-glow');
-                if (ctaButtons.length) {
-                  gsap.fromTo(ctaButtons,
-                    { opacity: 0, y: 15 },
-                    { opacity: 1, y: 0, duration: 0.5, stagger: 0.12, ease: 'power2.out' }
-                  );
-                }
-              }
-            }
-          }
-        );
-      }
-    });
+      tl.fromTo('.founder-portrait-frame', 
+        { opacity: 0, scale: 0.98, y: 24 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.85, ease: 'power2.out' }
+      )
+      .fromTo('.founder-anim-item',
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.65, stagger: 0.12, ease: 'power2.out' },
+        '-=0.5'
+      );
+    }, founderEl);
 
     return () => ctx.revert();
-  }, [data]);
-
-  // 8. Desktop Scroll-Linked Row Depth & Viewport-Center Focus
-  useEffect(() => {
-    const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches && window.innerWidth >= 768;
-    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!isDesktop || isReduced) return;
-
-    const ctx = gsap.context(() => {
-      const gridSelectors = [
-        '.stats-grid .motion-card',
-        '.niche-cards-grid .motion-card',
-        '.problems-grid .motion-card',
-        '.services-grid .motion-card',
-        '.testimonials-grid .motion-card'
-      ];
-
-      gridSelectors.forEach(selector => {
-        const items = gsap.utils.toArray(selector);
-        if (!items.length) return;
-        items.forEach((item, idx) => {
-          const drift = idx % 2 === 0 ? -12 : 12;
-          gsap.to(item, {
-            y: drift,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: item,
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: 1.5
-            }
-          });
-        });
-      });
-    });
-
-    // Viewport-Center Card Focus
-    let ticking = false;
-    const updateCenterFocus = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const motionCards = document.querySelectorAll('.motion-card');
-        const centerY = window.innerHeight / 2;
-        let closestCard = null;
-        let closestDist = Infinity;
-
-        motionCards.forEach(card => {
-          if (card.classList.contains('growth-dashboard-mockup') || 
-              card.classList.contains('problem-transition-banner') ||
-              card.classList.contains('cta-banner-wrapper') ||
-              card.classList.contains('faq-item')) {
-            return;
-          }
-          const rect = card.getBoundingClientRect();
-          if (rect.bottom < 0 || rect.top > window.innerHeight) return;
-          const cardCenter = rect.top + rect.height / 2;
-          const dist = Math.abs(cardCenter - centerY);
-          if (dist < closestDist) {
-            closestDist = dist;
-            closestCard = card;
-          }
-        });
-
-        motionCards.forEach(card => {
-          if (card === closestCard && closestDist < 160) {
-            card.classList.add('card-center-focus');
-          } else {
-            card.classList.remove('card-center-focus');
-          }
-        });
-        ticking = false;
-      });
-    };
-
-    window.addEventListener('scroll', updateCenterFocus, { passive: true });
-    updateCenterFocus();
-
-    return () => {
-      ctx.revert();
-      window.removeEventListener('scroll', updateCenterFocus);
-    };
-  }, [data]);
-
-  // 9. Desktop-Only 3D Tilt Hover (max 4° tilt + 6px lift)
-  useEffect(() => {
-    const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches && window.innerWidth >= 768;
-    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!isDesktop || isReduced) return;
-
-    const cards = document.querySelectorAll('.motion-card:not(.faq-item)');
-    if (!cards.length) return;
-
-    const handlers = [];
-
-    cards.forEach((card) => {
-      const onMouseMove = (e) => {
-        const rect = card.getBoundingClientRect();
-        const xNorm = (e.clientX - rect.left) / rect.width - 0.5;
-        const yNorm = (e.clientY - rect.top) / rect.height - 0.5;
-
-        const tiltX = yNorm * -7; // max ~3.5 deg
-        const tiltY = xNorm * 7;
-
-        gsap.to(card, {
-          rotateX: tiltX,
-          rotateY: tiltY,
-          y: -6,
-          transformPerspective: 1000,
-          duration: 0.35,
-          ease: 'power2.out',
-          overwrite: 'auto'
-        });
-      };
-
-      const onMouseLeave = () => {
-        gsap.to(card, {
-          rotateX: 0,
-          rotateY: 0,
-          y: 0,
-          duration: 0.55,
-          ease: 'power2.out',
-          overwrite: 'auto'
-        });
-      };
-
-      card.addEventListener('mousemove', onMouseMove, { passive: true });
-      card.addEventListener('mouseleave', onMouseLeave, { passive: true });
-      handlers.push({ card, onMouseMove, onMouseLeave });
-    });
-
-    return () => {
-      handlers.forEach(({ card, onMouseMove, onMouseLeave }) => {
-        card.removeEventListener('mousemove', onMouseMove);
-        card.removeEventListener('mouseleave', onMouseLeave);
-        gsap.set(card, { rotateX: 0, rotateY: 0, y: 0 });
-      });
-    };
-  }, [data]);
-
-  // 10. ScrollTrigger.refresh() on fonts ready and window load
-  useEffect(() => {
-    if (document.fonts?.ready) {
-      document.fonts.ready.then(() => {
-        ScrollTrigger.refresh();
-      });
-    }
-    const onWinLoad = () => ScrollTrigger.refresh();
-    window.addEventListener('load', onWinLoad);
-
-    return () => window.removeEventListener('load', onWinLoad);
   }, []);
 
-  // Handle Form Submit
+  // Form Submit Handler
   const handleSubmitLead = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      // 1. Save lead to backend database
+      // 1. Submit lead to API
       await api.submitLead(formState);
 
-      // 2. Format prefilled WhatsApp message
+      // 2. Prepare prefilled WhatsApp message
       const textMsg = 
-`*New Strategy Call Request - Phonixe Media*
+`*New Strategy Consultation Request - Phonixe Media*
 ---------------------------------------
 👤 *Name:* ${formState.name}
 📱 *WhatsApp:* ${formState.whatsapp}
-📸 *Instagram:* ${formState.instagram}
 🔮 *Domain/Niche:* ${formState.niche}
-🎯 *Primary Goal:* ${formState.goal}
-📝 *Notes/Challenges:* ${formState.message || 'None provided'}
+🎯 *Service Interested In:* ${formState.service}
+📸 *Instagram:* ${formState.instagram || 'Not provided'}
+📝 *Message:* ${formState.message || 'None'}
 ---------------------------------------
-_Looking forward to discussing our 360° growth strategy!_`;
+_Looking forward to connecting with Rudra Joshi & the Phonixe Media team!_`;
 
       const encoded = encodeURIComponent(textMsg);
-      const targetPhone = (data?.content?.whatsappNumber || '+91 8799690069').replace(/[^0-9]/g, '');
-      const url = `https://wa.me/${targetPhone}?text=${encoded}`;
-      setWhatsappLink(url);
-      setModalSuccess(true);
+      const url = `https://wa.me/${cleanWaNumber}?text=${encoded}`;
+      setFormSuccess(true);
 
-      // Auto redirect to WhatsApp after 800ms
       setTimeout(() => {
         window.open(url, '_blank');
-      }, 800);
+      }, 750);
     } catch (err) {
-      alert('Error submitting request: ' + err.message);
+      console.warn('Backend unavailable, opening WhatsApp fallback:', err.message);
+      const textMsg = `Hi Phonixe Media, I would like to book a strategy call for ${formState.name} (${formState.whatsapp}). Service: ${formState.service}`;
+      window.open(`https://wa.me/${cleanWaNumber}?text=${encodeURIComponent(textMsg)}`, '_blank');
+      setFormSuccess(true);
     } finally {
       setSubmitting(false);
     }
   };
 
+  // Filter items by published flag (or SHOW_PLACEHOLDERS)
+  const publishedCaseStudies = caseStudiesData.caseStudies.filter(
+    item => item.published || SHOW_PLACEHOLDERS
+  );
+  const publishedTestimonials = testimonialsData.testimonials.filter(
+    item => item.published || SHOW_PLACEHOLDERS
+  );
+
   return (
     <div className="landing-page-root">
-      {/* Scroll Progress Line */}
-      <div ref={progressBarRef} className="scroll-progress-line" aria-hidden="true" />
+      {/* 1. Master Golden Phoenix Storyteller Guide */}
+      <PhoenixGuide />
 
-      {/* Cinematic Golden Phoenix Motion Layer */}
-      <BirdLayer activeFaq={activeFaq} />
-
-      {/* Ambient Radial Glows */}
-      <div className="ambient-glow glow-top" aria-hidden="true"></div>
-      <div className="ambient-glow glow-middle" aria-hidden="true"></div>
-      <div className="ambient-glow glow-bottom" aria-hidden="true"></div>
-
-      {/* Top Announcement Bar */}
-      <div className="top-announcement">
-        <div className="container announcement-content">
-          <span className="announcement-pill">NOW ACCEPTING CLIENTS</span>
-          <p>Transforming Personal Brands for Spiritual, Life & Relationship Coaches with 360° Organic Growth</p>
-          <a href="#modal" onClick={(e) => { e.preventDefault(); setIsModalOpen(true); }} className="announcement-link">
-            Apply For Next Cohort &rarr;
-          </a>
-        </div>
-      </div>
-
-      {/* Navigation Header */}
-      <header className={`site-header ${isScrolled ? 'scrolled' : ''} ${isNavHidden ? 'nav-hidden' : ''} ${isPastHero ? 'past-hero' : ''}`}>
-        <div className="container nav-container">
-          <a href="#" className="brand-logo" onClick={(e) => handleNavClick(e, '#hero')} aria-label="Phonixe Media Home">
-            <img src="/assets/logo-horizontal.png" alt="Phonixe Media" className="nav-brand-logo" />
+      {/* 2. Sticky Glass Navbar (Glassmorphism Permitted) */}
+      <header className={`site-navbar ${isScrolled ? 'scrolled' : ''}`}>
+        <div className="container navbar-container">
+          <a href="#hero" className="navbar-brand" onClick={(e) => { e.preventDefault(); scrollTo('#hero'); }}>
+            <img src="/assets/logo-horizontal.png" alt="Phonixe Media" className="navbar-logo" />
           </a>
 
-          {/* Desktop Nav */}
-          <nav className="desktop-nav">
-            <ul className="nav-links">
-              <li><a href="#services" className={activeSection === 'services' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#services')}>Services</a></li>
-              <li><a href="#niches" className={activeSection === 'niches' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#niches')}>Who We Serve</a></li>
-              <li><a href="#process" className={activeSection === 'process' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#process')}>Our System</a></li>
-              <li><a href="#results" className={activeSection === 'results' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#results')}>Case Studies</a></li>
-              <li><a href="#about" className={activeSection === 'about' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#about')}>About</a></li>
-              <li><a href="#why-us" className={activeSection === 'why-us' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#why-us')}>Why Phonixe</a></li>
-              <li><a href="#faq" className={activeSection === 'faq' ? 'active' : ''} onClick={(e) => handleNavClick(e, '#faq')}>FAQ</a></li>
-            </ul>
+          <nav className="nav-links" aria-label="Main Navigation">
+            <a 
+              href="#founder" 
+              className={`nav-link ${activeSection === 'founder' ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); scrollTo('#founder'); }}
+            >
+              Founder
+            </a>
+            <a 
+              href="#results" 
+              className={`nav-link ${activeSection === 'results' ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); scrollTo('#results'); }}
+            >
+              Results
+            </a>
+            <a 
+              href="#services" 
+              className={`nav-link ${activeSection === 'services' ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); scrollTo('#services'); }}
+            >
+              Services
+            </a>
+            <a 
+              href="#process" 
+              className={`nav-link ${activeSection === 'process' ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); scrollTo('#process'); }}
+            >
+              Process
+            </a>
+            <a 
+              href="#why" 
+              className={`nav-link ${activeSection === 'why' ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); scrollTo('#why'); }}
+            >
+              Why Us
+            </a>
+            {publishedTestimonials.length > 0 && (
+              <a 
+                href="#testimonials" 
+                className={`nav-link ${activeSection === 'testimonials' ? 'active' : ''}`}
+                onClick={(e) => { e.preventDefault(); scrollTo('#testimonials'); }}
+              >
+                Testimonials
+              </a>
+            )}
+            <a 
+              href="#faq" 
+              className={`nav-link ${activeSection === 'faq' ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); scrollTo('#faq'); }}
+            >
+              FAQ
+            </a>
           </nav>
 
-          {/* Nav Actions */}
           <div className="nav-actions">
-            <a 
-              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I'm interested in scaling my coaching brand.")}`}
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="btn-whatsapp-header"
-              data-bird-hover
-            >
-              <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor">
-                <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
-              </svg>
-              <span>WhatsApp</span>
-            </a>
-            <button className="btn btn-gold btn-nav" onClick={() => setIsModalOpen(true)} data-magnetic-cta>
-              <span>{c.primaryCtaText || 'Book Strategy Call'}</span>
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
-                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
+            <button className="btn btn-primary btn-small" onClick={handleBookCallClick}>
+              Book a Free Strategy Call
             </button>
           </div>
 
@@ -1418,7 +341,7 @@ _Looking forward to discussing our 360° growth strategy!_`;
           <button 
             className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Menu"
+            aria-label="Toggle navigation menu"
           >
             <span className="bar"></span>
             <span className="bar"></span>
@@ -1426,901 +349,188 @@ _Looking forward to discussing our 360° growth strategy!_`;
           </button>
         </div>
 
-        {/* Mobile Drawer */}
-        <div className={`mobile-nav-drawer ${mobileMenuOpen ? 'open' : ''}`}>
+        {/* Mobile Navigation Drawer */}
+        <div className={`mobile-drawer ${mobileMenuOpen ? 'open' : ''}`}>
           <ul className="mobile-nav-links">
-            <li><a href="#services" className={`mobile-link ${activeSection === 'services' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#services'); }}>Services</a></li>
-            <li><a href="#niches" className={`mobile-link ${activeSection === 'niches' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#niches'); }}>Who We Serve</a></li>
-            <li><a href="#process" className={`mobile-link ${activeSection === 'process' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#process'); }}>Our System</a></li>
-            <li><a href="#results" className={`mobile-link ${activeSection === 'results' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#results'); }}>Case Studies</a></li>
-            <li><a href="#about" className={`mobile-link ${activeSection === 'about' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#about'); }}>About</a></li>
-            <li><a href="#why-us" className={`mobile-link ${activeSection === 'why-us' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#why-us'); }}>Why Phonixe</a></li>
-            <li><a href="#faq" className={`mobile-link ${activeSection === 'faq' ? 'active' : ''}`} onClick={(e) => { setMobileMenuOpen(false); handleNavClick(e, '#faq'); }}>FAQ</a></li>
+            <li><a href="#founder" className="mobile-link" onClick={(e) => { e.preventDefault(); scrollTo('#founder'); }}>Founder</a></li>
+            <li><a href="#results" className="mobile-link" onClick={(e) => { e.preventDefault(); scrollTo('#results'); }}>Results</a></li>
+            <li><a href="#services" className="mobile-link" onClick={(e) => { e.preventDefault(); scrollTo('#services'); }}>Services</a></li>
+            <li><a href="#process" className="mobile-link" onClick={(e) => { e.preventDefault(); scrollTo('#process'); }}>Process</a></li>
+            <li><a href="#why" className="mobile-link" onClick={(e) => { e.preventDefault(); scrollTo('#why'); }}>Why Us</a></li>
+            {publishedTestimonials.length > 0 && (
+              <li><a href="#testimonials" className="mobile-link" onClick={(e) => { e.preventDefault(); scrollTo('#testimonials'); }}>Testimonials</a></li>
+            )}
+            <li><a href="#faq" className="mobile-link" onClick={(e) => { e.preventDefault(); scrollTo('#faq'); }}>FAQ</a></li>
           </ul>
-          <div className="mobile-drawer-cta">
-            <button className="btn btn-gold w-full" onClick={() => { setMobileMenuOpen(false); setIsModalOpen(true); }}>
-              Book Strategy Call
+          <div style={{ marginTop: '32px' }}>
+            <button className="btn btn-primary w-full" onClick={handleBookCallClick} style={{ width: '100%' }}>
+              Book a Free Strategy Call
             </button>
           </div>
         </div>
       </header>
 
-      {/* HERO SECTION */}
+      {/* ====================================================================
+          1. HERO SECTION (#hero) - "What is this?"
+          ==================================================================== */}
       <section className="hero-section" id="hero">
-        <div className="container hero-container">
-          <div className="hero-content">
-            <div className="badge-gold">
-              <span className="badge-pulse"></span>
-              <span>{c.tagline || '360° Social Growth & Personal Branding'}</span>
-            </div>
-
-            <h1 className="hero-headline">
-              {c.heroHeadlinePrefix || 'Turn Your Expertise Into A Brand'}{' '}
-              <span className="gradient-gold-text editorial-italic">{c.heroHeadlineHighlight || 'People Remember.'}</span>
+        <div className="container hero-layout">
+          <div className="hero-content" data-no-cover>
+            <h1 className="hero-title">
+              Turn Your Expertise Into A Brand{' '}
+              <span className="font-serif-italic-gold">People Remember.</span>
             </h1>
-
-            <p className="hero-subheadline">
-              {c.heroSubheadline || 'We help coaches, consultants and personal brands build a powerful social presence that attracts attention, builds trust and generates qualified leads.'}
+            <p className="hero-text">
+              We help coaches, consultants, experts and personal brands build a powerful social presence that attracts attention, builds trust and generates qualified leads.
             </p>
-
-            {/* Targeted Coach Niches */}
-            <div className="hero-niche-chips">
-              <span className="chip">Numerologists</span>
-              <span className="chip">Tarot Readers</span>
-              <span className="chip">Vastu Experts</span>
-              <span className="chip">Spiritual Healers</span>
-              <span className="chip">Relationship Mentors</span>
-            </div>
-
-            <div className="hero-cta-group">
-              <button className="btn btn-gold btn-large shadow-gold-glow" onClick={() => setIsModalOpen(true)} data-magnetic-cta>
-                <span>{c.primaryCtaText || 'Book a Free Strategy Call'}</span>
-                <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
-                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
+            <div className="hero-buttons">
+              <button className="btn btn-primary btn-large" onClick={handleBookCallClick}>
+                Book A Free Strategy Call
               </button>
-              <a href="#process" onClick={(e) => handleNavClick(e, '#process')} className="btn btn-outline-glass btn-large">
-                <span>{c.secondaryCtaText || 'See How We Work'}</span>
-              </a>
+              <button className="btn btn-secondary btn-large" onClick={() => scrollTo('#results')}>
+                Explore Our Work
+              </button>
             </div>
-
-            <div className="hero-trust-bar">
-              <span className="trust-icon" data-bird-hover>✦</span>
-              <span>{c.trustLine || 'Strategy • Content • Personal Branding • Growth'}</span>
-            </div>
-
-            <div className="hero-micro-proof">
-              <div className="avatar-group">
-                <span className="avatar-circle" data-bird-hover>🔮</span>
-                <span className="avatar-circle" data-bird-hover>🔢</span>
-                <span className="avatar-circle" data-bird-hover>🏛️</span>
-                <span className="avatar-circle" data-bird-hover>✨</span>
-              </div>
-              <div className="micro-proof-text">
-                <strong>100% Organic Growth</strong> tailored to convert followers into high-ticket clients
-              </div>
+            <div className="hero-trust-line">
+              Strategy • Content • Personal Branding • Growth
             </div>
           </div>
 
-          <div className="hero-visual">
-            <div className="growth-dashboard-mockup glass-card card-spotlight motion-card" data-motion="scale">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="mockup-header">
-                <div className="user-profile-badge">
-                  <div className="profile-pic-container" data-bird-hover>
-                    <img src="/assets/ruchikaa-profile.jpg" alt="soultalkswith_ruchikaa" className="mini-gold-phoenix" />
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>soultalkswith_ruchikaa</span>
-                      <span className="verified-badge">✓</span>
-                    </div>
-                    <span style={{ fontSize: '0.76rem', color: 'var(--text-dim)' }}>Managed by Phonixe Media</span>
-                  </div>
-                </div>
-                <div className="live-growth-pill pill-pulse-onload">
-                  <span className="pulse-green"></span>
-                  <span>+384% This Month</span>
-                </div>
-              </div>
-
-              <div className="mockup-stats-grid">
-                <div className="mockup-stat-box">
-                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Organic Accounts Reached</span>
-                  <div className="stat-box-val">1.3Cr</div>
-                  <span className="stat-box-trend positive">↑ 412.8% vs last month</span>
-                </div>
-                <div className="mockup-stat-box">
-                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Discovery Call DMs</span>
-                  <div className="stat-box-val">79 Leads</div>
-                  <span className="stat-box-trend positive">↑ High-Intent Inquiries</span>
-                </div>
-              </div>
-
-              <div className="mockup-chart-container">
-                <svg className="growth-chart-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#E5A93C" stopOpacity="0.45" />
-                      <stop offset="100%" stopColor="#E5A93C" stopOpacity="0.0" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,105 Q60,95 100,80 T200,60 T300,35 T400,10 L400,120 L0,120 Z" fill="url(#chartGrad)" />
-                  <path 
-                    ref={chartPathRef}
-                    d="M0,105 Q60,95 100,80 T200,60 T300,35 T400,10" 
-                    fill="none" 
-                    stroke="#FFD700" 
-                    strokeWidth="3.5" 
-                    style={{ strokeDasharray: 450, strokeDashoffset: 450, transition: 'stroke-dashoffset 1.8s cubic-bezier(0.16, 1, 0.3, 1)' }}
-                  />
-                  <circle cx="100" cy="80" r="4" fill="#FFD700" />
-                  <circle cx="200" cy="60" r="4" fill="#FFD700" />
-                  <circle cx="300" cy="35" r="4" fill="#FFD700" />
-                  <circle cx="400" cy="10" r="5" fill="#FFF" stroke="#E5A93C" strokeWidth="2" />
-                </svg>
-              </div>
-
-              <a 
-                href="https://www.instagram.com/reel/Dd1EZ_PzikB/"
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="mockup-reel-floating"
-                aria-label="Watch the reel by soultalkswith_ruchikaa on Instagram (opens in a new tab)"
-              >
-                <div className="reel-thumbnail" data-bird-hover>
-                  <img src="/assets/reel-cover.jpg" alt="Reel preview" className="reel-cover-img" />
-                  <div className="reel-thumbnail-overlay" aria-hidden="true" />
-                  <span className="reel-play-icon" aria-hidden="true">▶</span>
-                </div>
-                <div className="reel-info">
-                  <div className="reel-label">Viral Coach Script</div>
-                  <div className="reel-hook-text">"She married him because he was earning ₹80 lakhs a year at the age of 28, but... "</div>
-                  <div className="reel-views-line">
-                    👁️ <span className="reel-views-count" ref={reelViewsRef}>0.0M</span> Views • 💬 389 Inquiries
-                  </div>
-                </div>
-                <div className="reel-action-badge">
-                  <svg className="reel-action-glyph" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                  </svg>
-                  <span>Watch on Instagram</span>
-                  <span className="reel-arrow-icon" aria-hidden="true">↗</span>
-                </div>
-              </a>
-
-              <div className="floating-conversion-badge">
-                <div className="badge-icon-check">✓</div>
-                <div>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#fff', display: 'block' }}>New High-Ticket Discovery Call</span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>Tarot Mentorship • Booked via Bio Link</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Desktop Right Anchor for the Golden Phoenix */}
+          <div className="hero-phoenix-anchor" aria-hidden="true" />
         </div>
       </section>
 
-      {/* SOCIAL PROOF & STATS SECTION */}
-      <section className="stats-section" id="social-proof">
+      {/* ====================================================================
+          2. MEET THE FOUNDER (#founder) - "Who is behind it?"
+          Directly after the Hero
+          ==================================================================== */}
+      <section className="founder-section" id="founder">
         <div className="container">
-          <div className="section-header text-center reveal">
-            <span className="section-subtitle">MEASURABLE IMPACT</span>
-            <h2 className="section-title">Your Content Should Do More Than Get Views.</h2>
-            <p className="section-lead">It should build unshakeable credibility, establish market authority, and convert attention into qualified discovery calls.</p>
-          </div>
-
-          <div className="stats-grid">
-            {stats.map((st, idx) => (
-              <div className="stat-card glass-card reveal motion-card card-spotlight" data-motion="rise" key={st._id || idx}>
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="stat-icon-wrapper" data-bird-hover>✦</div>
-                <div className="stat-number-row">
-                  <span>{st.number}</span>
-                  <span className="stat-suffix">{st.suffix}</span>
-                </div>
-                <h3 className="stat-label">{st.label}</h3>
-                <p className="stat-desc">{st.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SPECIALIZED COACHES SPOTLIGHT */}
-      <section className="niches-section" id="niches">
-        <div className="container">
-          <div className="section-header text-center reveal">
-            <span className="section-subtitle">DESIGNED FOR TRANSFORMATIONAL LEADERS</span>
-            <h2 className="section-title">We Understand The Nuances Of Your Expertise.</h2>
-            <p className="section-lead">Selling spiritual insights, energy healing, mindset shifts, or life counsel requires deep emotional resonance, ethical authority, and authentic storytelling.</p>
-          </div>
-
-          <div className="niche-cards-grid">
-            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="niche-card-icon" data-bird-hover>🔮</div>
-              <h3>Tarot Readers</h3>
-              <p>Convert general curiosity into deeply engaged 1-on-1 private reading clients through high-trust card explanation reels, predictive insights, and ethical boundaries.</p>
-              <div className="niche-focus-tags">
-                <span>Reading DMs</span>
-                <span>Intuitive Hooks</span>
-                <span>Live Streams</span>
-              </div>
+          <div className="founder-grid">
+            {/* Left Column: Portrait Frame with Gold Glow & Perch Marker */}
+            <div className="founder-portrait-frame" data-perch aria-label="Founder Portrait">
+              <div className="perch-zone-spacer" aria-hidden="true" />
+              <img
+                src={founderData.portrait}
+                alt={founderData.portraitAlt}
+                className="founder-portrait-img"
+                loading="eager"
+                width="480"
+                height="640"
+              />
             </div>
 
-            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="niche-card-icon" data-bird-hover>🔢</div>
-              <h3>Numerologists</h3>
-              <p>Break down complex birth date matrixes, destiny numbers, and master numbers into digestible visual carousels and relatable reels that evoke instant realization.</p>
-              <div className="niche-focus-tags">
-                <span>Destiny Numbers</span>
-                <span>Name Correction</span>
-                <span>Case Carousels</span>
-              </div>
-            </div>
-
-            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="niche-card-icon" data-bird-hover>🏛️</div>
-              <h3>Vastu Experts</h3>
-              <p>Showcase real property transformations, architectural energy remedies, and actionable lifestyle adjustments that position you as the definitive high-ticket consultant.</p>
-              <div className="niche-focus-tags">
-                <span>Site Inspections</span>
-                <span>Commercial Vastu</span>
-                <span>High-Ticket Consults</span>
-              </div>
-            </div>
-
-            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="niche-card-icon" data-bird-hover>💫</div>
-              <h3>Akashic Record Readers & Healers</h3>
-              <p>Demystify soul history, karmic blockages, and ancestral trauma with profound storytelling frameworks that make prospective seekers feel seen, understood, and guided.</p>
-              <div className="niche-focus-tags">
-                <span>Soul Contracts</span>
-                <span>Karmic Healing</span>
-                <span>High-Value Discovery</span>
-              </div>
-            </div>
-
-            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="niche-card-icon" data-bird-hover>🤝</div>
-              <h3>Relationship Coaches</h3>
-              <p>Address painful communication breakdowns, attachment triggers, and partnership healing with empathetic video scripts that build immediate emotional safety.</p>
-              <div className="niche-focus-tags">
-                <span>Emotional Resonance</span>
-                <span>Couples Healing</span>
-                <span>Private Retainers</span>
-              </div>
-            </div>
-
-            <div className="niche-card glass-card reveal motion-card card-spotlight" data-motion="fan">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="niche-card-icon" data-bird-hover>🌿</div>
-              <h3>Spiritual, Life & Wellness Mentors</h3>
-              <p>Establish sovereign personal authority, articulate your signature methodology, and attract dream coaching clients who value spiritual depth over superficial hacks.</p>
-              <div className="niche-focus-tags">
-                <span>Signature Program</span>
-                <span>Mindset Elevation</span>
-                <span>Organic Retainers</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* THE PROBLEM SECTION */}
-      <section className="problem-section" id="problem">
-        <div className="container">
-          <div className="section-header text-center reveal">
-            <span className="section-subtitle">THE HARSH REALITY</span>
-            <h2 className="section-title">{c.problemHeadline || 'Posting Consistently Isn’t Enough.'}</h2>
-            <p className="section-lead">Why most coaches struggle to get clients despite posting everyday:</p>
-          </div>
-
-          <div className="problems-grid">
-            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="problem-icon" data-bird-hover>❌</div>
-              <h3>Random Content Without A Strategy</h3>
-              <p>Waking up wondering "what should I record today?" resulting in disjointed topics that confuse the algorithm and leave your audience unclear about what you actually offer.</p>
-            </div>
-            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="problem-icon" data-bird-hover>❌</div>
-              <h3>Low Engagement Despite Daily Effort</h3>
-              <p>Spending 3 hours filming and editing a video only to see 150 views and 10 likes from close friends. It feels disheartening and completely unsustainable.</p>
-            </div>
-            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="problem-icon" data-bird-hover>❌</div>
-              <h3>No Clear Personal Brand Positioning</h3>
-              <p>Blending in with thousands of other coaches. Without sharp visual identity, signature frameworks, and distinct voice, visitors scroll right past your profile.</p>
-            </div>
-            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="problem-icon" data-bird-hover>❌</div>
-              <h3>Views That Never Turn Into Inquiries</h3>
-              <p>A reel hits 50,000 views, yet your calendar has zero consultations booked. Vanity attention without an intentional conversion bridge does not pay your bills.</p>
-            </div>
-            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="problem-icon" data-bird-hover>❌</div>
-              <h3>Creative Burnout & Lack Of Consistency</h3>
-              <p>Juggling client consultations, life, and content production alone leads to constant stop-and-start cycles that reset your social media momentum every month.</p>
-            </div>
-            <div className="problem-card glass-card reveal motion-card card-spotlight" data-motion="tilt">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="problem-icon" data-bird-hover>❌</div>
-              <h3>No Predictable Content & Shooting System</h3>
-              <p>Uncertainty around lighting, camera confidence, vocal inflection, scripting hooks, and video aesthetics keeps you feeling amateur instead of industry-leading.</p>
-            </div>
-          </div>
-
-          <div className="problem-transition-banner glass-card reveal motion-card card-spotlight" data-motion="scale">
-            <div className="card-light-sweep" aria-hidden="true" />
-            <img src="/assets/logo-horizontal.png" alt="Phonixe Media" className="transition-logo" />
-            <div style={{ flex: 1 }}>
-              <h3 style={{ fontSize: '1.45rem', marginBottom: '14px', lineHeight: 1.35, color: 'var(--gold-bright)' }}>
-                {c.problemTransitionText || 'That’s where Phonixe Media comes in.'}
-              </h3>
-              <p style={{ fontSize: '0.95rem', color: '#DDE2EB', lineHeight: 1.65, margin: 0 }}>
-                We eliminate the guesswork. We handle the strategic positioning, scripting, shooting direction, cinematic editing, and conversion systems so you can focus 100% on serving your clients.
-              </p>
-            </div>
-            <button className="btn btn-gold" onClick={() => setIsModalOpen(true)}>
-              Fix My Social Strategy
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* SERVICES SECTION */}
-      <section className="services-section" id="services">
-        <div className="container">
-          <div className="section-header text-center reveal">
-            <span className="section-subtitle">OUR FULL-SPECTRUM SUITE</span>
-            <h2 className="section-title">{c.servicesHeadline || 'Everything You Need To Build A Strong Social Brand.'}</h2>
-            <p className="section-lead">A comprehensive 360° growth engine designed specifically for coaches and personal brands who demand tangible business outcomes.</p>
-          </div>
-
-          <div className="services-grid">
-            {services.map((srv, idx) => (
-              <div className="service-card glass-card reveal motion-card card-spotlight" data-motion="rise" key={srv._id || idx}>
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="service-badge">{srv.badge}</div>
-                <div className="service-icon-box" data-bird-hover>✦</div>
-                <h3 className="service-title">{srv.title}</h3>
-                <p className="service-desc">{srv.desc}</p>
-                <ul className="service-features">
-                  {srv.features?.map((f, fi) => (
-                    <li key={fi}>{f}</li>
-                  ))}
-                </ul>
-                <div className="service-footer">
-                  <button className="btn-text-gold" onClick={() => setIsModalOpen(true)}>
-                    Inquire For This &rarr;
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center services-cta-wrap">
-            <button className="btn btn-gold btn-large" onClick={() => setIsModalOpen(true)}>
-              Request A Custom Growth Package &rarr;
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 4-STEP PROCESS SECTION */}
-      <section className="process-section" id="process">
-        <div className="container">
-          <div className="section-header text-center reveal">
-            <span className="section-subtitle">THE BLUEPRINT</span>
-            <h2 className="section-title">{c.processHeadline || 'Our Simple 4-Step Growth System'}</h2>
-            <p className="section-lead">A seamless, stress-free methodology that takes you from random posting to an automated client attraction machine.</p>
-            <div className="blueprint-warning-pill">
-              <span className="warning-icon" aria-hidden="true">⚠️</span>
-              <span>Real organic growth takes time. The first 3 months build your foundation.</span>
-            </div>
-          </div>
-
-          <div className="process-timeline">
-            <div className="process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="step-number-badge" data-bird-hover>01</div>
-              <span className="step-tag">Phase 1 • Assessment</span>
-              <h3>Discover</h3>
-              <p className="step-desc">
-                Understand your business, audience, offer and current social media presence. We uncover what makes your voice uniquely powerful.
-              </p>
-              <div className="step-deliverables">
-                <span>✓ Comprehensive Brand Audit</span>
-                <span>✓ Audience Persona Mapping</span>
-                <span>✓ Offer Positioning Check</span>
-              </div>
-            </div>
-
-            <div className="process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="step-number-badge" data-bird-hover>02</div>
-              <span className="step-tag">Phase 2 • Architecture</span>
-              <h3>Strategize</h3>
-              <p className="step-desc">
-                Build your positioning, content pillars, hooks, formats and growth strategy.
-              </p>
-              <div className="step-deliverables">
-                <span>✓ 30-Day Content Roadmap</span>
-                <span>✓ High-Converting Hook Bank</span>
-                <span>✓ DM Funnel & CTA Triggers</span>
-              </div>
-            </div>
-
-            <div className="process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="step-number-badge" data-bird-hover>03</div>
-              <span className="step-tag">Phase 3 • Execution</span>
-              <h3>Create</h3>
-              <p className="step-desc">
-                Develop high-quality content including reels, carousels, stories and creatives + shooting assistance.
-              </p>
-              <div className="step-deliverables">
-                <span>✓ Effortless 2-Hour Batch Filming</span>
-                <span>✓ Cinematic Editing & Audio</span>
-                <span>✓ Branded Visual Graphics</span>
-              </div>
-            </div>
-
-            <div className="process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="step-number-badge" data-bird-hover>04</div>
-              <span className="step-tag">Phase 4 • Scale</span>
-              <h3>Optimize</h3>
-              <p className="step-desc">
-                Analyze performance, identify what works and continuously improve the strategy.
-              </p>
-              <div className="step-deliverables">
-                <span>✓ Monthly Strategic Growth Review</span>
-                <span>✓ Lead Conversion Tracking</span>
-                <span>✓ Continuous Creative Evolution</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="process-guarantee-box glass-card text-center reveal motion-card card-spotlight" data-motion="scale">
-            <div className="card-light-sweep" aria-hidden="true" />
-            <div className="guarantee-icon" data-bird-hover>⚡</div>
-            <h4>Spend Just 2–3 Hours Per Month Recording. We Handle The Rest.</h4>
-            <p>No more staring at video editing timelines or wrestling with captions at midnight.</p>
-            <button className="btn btn-gold" onClick={() => setIsModalOpen(true)} data-magnetic-cta>
-              Start Your 4-Step System
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* CASE STUDIES SECTION */}
-      <section className="results-section" id="results">
-        <div className="container">
-          <div className="section-header text-center reveal">
-            <span className="section-subtitle">PROVEN RESULTS</span>
-            <h2 className="section-title">{c.resultsHeadline || 'Strategy. Content. Consistency. Growth.'}</h2>
-            <p className="section-lead">Here is how our strategic system transforms coaching businesses:</p>
-          </div>
-
-          <div className="case-studies-grid">
-            {caseStudies.map((cs, idx) => (
-              <div className={`case-card glass-card reveal motion-card card-spotlight ${idx === 1 ? 'case-card-highlight' : ''}`} data-motion="scale" key={cs._id || idx}>
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="case-top-bar">
-                  <span className="case-niche-tag">{cs.niche}</span>
-                </div>
-                <h3 className="case-client-name">{cs.clientName}</h3>
-                <div className="case-comparison-grid">
-                  <div className="case-box case-box-starting">
-                    <span className="box-tag">Starting Point</span>
-                    <p>{cs.startingPoint}</p>
-                  </div>
-                  <div className="case-box case-box-strategy">
-                    <span className="box-tag gold">Phonixe Strategy</span>
-                    <p>{cs.strategy}</p>
-                  </div>
-                </div>
-
-                {(() => {
-                  const mReach = parseMetric(cs.reach, 'Monthly Reach');
-                  const mLeads = parseMetric(cs.leads, 'Qualified Leads');
-                  const mGrowth = parseMetric(cs.growth, 'Growth Factor');
-                  return (
-                    <div className="case-metrics-row">
-                      <div className="metric-item">
-                        <span className="metric-number" data-target-metric={mReach.value}>{mReach.value}</span>
-                        <span className="metric-title">{mReach.label}</span>
-                      </div>
-                      <div className="metric-item">
-                        <span className="metric-number" data-target-metric={mLeads.value}>{mLeads.value}</span>
-                        <span className="metric-title">{mLeads.label}</span>
-                      </div>
-                      <div className="metric-item">
-                        <span className="metric-number" data-target-metric={mGrowth.value}>{mGrowth.value}</span>
-                        <span className="metric-title">{mGrowth.label}</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                <div className="case-bottom-cta">
-                  <button className="btn-text-gold" onClick={() => setIsModalOpen(true)}>
-                    Apply Similar Strategy &rarr;
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* TESTIMONIALS SECTION */}
-      <section className="testimonials-section" id="testimonials">
-        <div className="container">
-          <div className="section-header text-center reveal">
-            <span className="section-subtitle">CLIENT EXPERIENCES</span>
-            <h2 className="section-title">{c.testimonialsHeadline || 'What Our Clients Say'}</h2>
-            <p className="section-lead">Real words from real experts. We never generate fabricated reviews.</p>
-          </div>
-
-          <div className="testimonials-grid">
-            {testimonials.map((t, idx) => (
-              <div className="testimonial-card glass-card reveal motion-card card-spotlight" data-motion="rise" key={t._id || idx}>
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="stars-row">
-                  {Array.from({ length: t.stars || 5 }).map((_, si) => (
-                    <span key={si} className="star-char">★</span>
-                  ))}
-                </div>
-                <p className="testimonial-quote">"{t.quote}"</p>
-                <div className="testimonial-author">
-                  <div className="placeholder-avatar" data-bird-hover>{t.avatarEmoji || '✨'}</div>
-                  <div className="author-info">
-                    <span className="author-name">{t.authorName}</span>
-                    <span className="author-niche">{t.niche}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ABOUT US SECTION (OUR STORY) */}
-      <section className="about-section" id="about" aria-labelledby="about-heading">
-        {/* Structured Data: Organization & Founder Person JSON-LD */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              "name": c.agencyName || "Phonixe Media",
-              "description": about.subheading,
-              "url": typeof window !== "undefined" ? window.location.origin : "https://phonixemedia.com",
-              "sameAs": [
-                about.founder?.socials?.instagram || igUrl,
-                about.founder?.socials?.linkedin || ""
-              ].filter(Boolean),
-              "founder": {
-                "@type": "Person",
-                "name": about.founder?.name || "Founder of Phonixe Media",
-                "jobTitle": about.founder?.title || "Founder & Creative Director, Phonixe Media"
-              }
-            })
-          }}
-        />
-
-        <div className="container">
-          {/* Section Header */}
-          <div className="section-header text-center reveal">
-            <span className="section-subtitle">{about.label || 'OUR STORY'}</span>
-            <h2 className="section-title" id="about-heading">
-              {about.headingPrefix || 'The Story Behind'}{' '}
-              <span className="text-italic-gold">{about.headingHighlight || 'Phonixe Media.'}</span>
-            </h2>
-            <p className="section-lead">{about.subheading}</p>
-          </div>
-
-          {/* 1. Founder Block (Two-Column on Desktop, Stacked on Mobile) */}
-          <div className="about-founder-grid">
-            {/* Left: Founder Photo Card */}
-            <figure className="founder-photo-card glass-card reveal motion-card card-spotlight" data-motion="rise">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="founder-photo-frame">
-                {!founderImgError && about.founder?.photoUrl ? (
-                  <img
-                    src={about.founder.photoUrl}
-                    alt={about.founder.photoAlt || `${about.founder.name} - ${about.founder.title}`}
-                    className="founder-photo-img"
-                    loading="lazy"
-                    width="480"
-                    height="560"
-                    onError={() => setFounderImgError(true)}
-                  />
-                ) : (
-                  <div className="founder-photo-placeholder" role="img" aria-label={about.founder?.photoAlt || 'Founder of Phonixe Media'}>
-                    <div className="founder-placeholder-glow" aria-hidden="true" />
-                    <img
-                      src="/assets/phoenix-badge.png"
-                      alt=""
-                      aria-hidden="true"
-                      className="founder-placeholder-emblem"
-                      loading="lazy"
-                      data-bird-hover
-                    />
-                    <span className="founder-placeholder-title">{about.founder?.name || 'Founder of Phonixe Media'}</span>
-                    <span className="founder-placeholder-subtitle">{about.founder?.title || 'Founder & Creative Director'}</span>
-                  </div>
-                )}
-                <div className="founder-photo-overlay" aria-hidden="true" />
+            {/* Right Column: Founder Information */}
+            <div className="founder-info" data-no-cover>
+              <div className="founder-anim-item">
+                <span className="section-eyebrow">{founderData.eyebrow}</span>
+                <h2 className="founder-name">{founderData.name}</h2>
+                <p className="founder-subtitle">{founderData.subtitle}</p>
               </div>
 
-              <figcaption className="founder-photo-caption">
-                <span className="founder-badge-dot" aria-hidden="true" />
-                <span>{about.founder?.badgeText || 'Born From Rising High'}</span>
-              </figcaption>
-            </figure>
-
-            {/* Right: Founder Bio, Socials & Pull Quote */}
-            <div className="founder-bio-card glass-card reveal motion-card card-spotlight" data-motion="rise">
-              <div className="card-light-sweep" aria-hidden="true" />
-              <div className="founder-bio-header">
-                <div className="founder-identity">
-                  <span className="founder-eyebrow">LEADERSHIP & VISION</span>
-                  <h3 className="founder-name">{about.founder?.name || 'Founder of Phonixe Media'}</h3>
-                  <p className="founder-role">{about.founder?.title || 'Founder & Creative Director, Phonixe Media'}</p>
-                </div>
-
-                {/* Social Link Icons */}
-                {(about.founder?.socials?.instagram || about.founder?.socials?.linkedin) && (
-                  <div className="founder-socials" aria-label="Founder Social Links">
-                    {about.founder?.socials?.instagram && (
-                      <a
-                        href={about.founder.socials.instagram}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="founder-social-btn"
-                        aria-label="Instagram"
-                        title="Follow on Instagram"
-                        data-bird-hover
-                      >
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                        </svg>
-                      </a>
-                    )}
-                    {about.founder?.socials?.linkedin && (
-                      <a
-                        href={about.founder.socials.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="founder-social-btn"
-                        aria-label="LinkedIn"
-                        title="Connect on LinkedIn"
-                        data-bird-hover
-                      >
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                          <rect x="2" y="9" width="4" height="12"></rect>
-                          <circle cx="4" cy="4" r="2"></circle>
-                        </svg>
-                      </a>
-                    )}
-                  </div>
-                )}
+              <div className="founder-anim-item">
+                <p className="founder-intro">{founderData.intro}</p>
               </div>
 
-              <div className="founder-bio-paragraphs">
-                {(about.founder?.bio || []).map((paragraph, pIdx) => (
-                  <p key={pIdx}>{paragraph}</p>
+              <div className="founder-meta-row founder-anim-item">
+                <span className="founder-exp-number">{founderData.experienceValue}</span>
+                <span className="founder-exp-label">{founderData.experienceLabel}</span>
+              </div>
+
+              <div className="founder-anim-item">
+                <p className="founder-education">{founderData.education}</p>
+              </div>
+
+              {/* Expertise Chips */}
+              <div className="founder-chips founder-anim-item">
+                {founderData.expertiseChips.map((chip, idx) => (
+                  <span key={idx} className="expertise-chip">{chip}</span>
                 ))}
               </div>
 
-              {about.founder?.quote && (
-                <blockquote className="founder-pull-quote">
-                  <span className="quote-mark" aria-hidden="true">“</span>
-                  <p className="text-italic-gold">"{about.founder.quote}"</p>
-                </blockquote>
-              )}
-            </div>
-          </div>
-
-          {/* 2. How It Started (Vertical Timeline) */}
-          <div className="about-timeline-wrapper">
-            <div className="about-sub-header text-center reveal">
-              <span className="section-subtitle">THE JOURNEY</span>
-              <h3 className="about-sub-title">{about.timelineHeading || 'How It Started'}</h3>
-              {about.timelineSubheading && (
-                <p className="about-sub-lead">{about.timelineSubheading}</p>
-              )}
-            </div>
-
-            <div className="about-story-timeline">
-              <div className="about-timeline-line" aria-hidden="true" />
-              {(about.timeline || []).map((milestone, mIdx) => (
-                <div className="about-timeline-item" key={mIdx}>
-                  <div className="about-timeline-node" data-bird-hover aria-hidden="true">
-                    <span>✦</span>
-                  </div>
-                  <div className="about-timeline-card process-step glass-card reveal motion-card card-spotlight" data-motion="rise">
-                    <div className="card-light-sweep" aria-hidden="true" />
-                    <div className="about-timeline-meta">
-                      <div className="step-number-badge about-year-badge" data-bird-hover>{milestone.year}</div>
-                      {milestone.tag && <span className="step-tag">{milestone.tag}</span>}
-                    </div>
-                    <h3>{milestone.title}</h3>
-                    <p className="step-desc">{milestone.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 3. Mission & Values (3 Cards in a Row, Stacked on Mobile) */}
-          <div className="about-values-wrapper">
-            <div className="about-sub-header text-center reveal">
-              <span className="section-subtitle">WHAT DRIVES US</span>
-              <h3 className="about-sub-title">{about.valuesHeading || 'Mission & Core Values'}</h3>
-            </div>
-
-            <div className="about-values-grid">
-              {(about.values || []).map((val, vIdx) => (
-                <div className="about-value-card glass-card reveal motion-card card-spotlight" data-motion="rise" key={vIdx}>
-                  <div className="card-light-sweep" aria-hidden="true" />
-                  <div className="why-point-icon about-value-badge" data-bird-hover>
-                    {val.number || `0${vIdx + 1}`}
-                  </div>
-                  <h3>{val.title}</h3>
-                  <p>{val.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 4. Closing CTA */}
-          <div className="about-closing-cta process-guarantee-box glass-card reveal motion-card card-spotlight" data-motion="scale">
-            <div className="card-light-sweep" aria-hidden="true" />
-            <h3 className="about-cta-heading">{about.ctaPrompt || "Ready to write your brand's story?"}</h3>
-            <button className="btn btn-gold btn-large" onClick={() => setIsModalOpen(true)} data-magnetic-cta>
-              <span>{about.ctaButtonText || 'Book a Free Strategy Call'}</span>
-              <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
-                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* WHY PHONIXE MEDIA */}
-      <section className="why-us-section" id="why-us">
-        <div className="container">
-          <div className="why-us-layout">
-            <div className="why-us-intro reveal">
-              <span className="section-subtitle">THE PHONIXE DIFFERENCE</span>
-              <h2 className="section-title">{c.whyUsHeadline || 'Not Just Another Social Media Agency.'}</h2>
-              <p className="section-lead">
-                Most agencies give you cookie-cutter templates, random dance trends, and vanity metrics that don't convert into paid consultations. We build an enduring personal brand ecosystem.
-              </p>
-
-              <div className="why-brand-highlight glass-card motion-card card-spotlight" data-motion="scale">
-                <div className="card-light-sweep" aria-hidden="true" />
-                <img src="/assets/phoenix-badge.png" alt="Phonixe Logo Badge" className="why-logo-img" data-bird-hover />
-                <div className="why-brand-quote">
-                  <strong>Born From Rising High:</strong> Like the mythical Phoenix, we take your hidden expertise and elevate it into a radiant authority that commands attention and converts into revenue.
-                </div>
+              {/* Achievement Card (Glassmorphism Permitted) */}
+              <div className="founder-achievement-card glass-permitted founder-anim-item">
+                <p className="founder-achievement-text">
+                  <span style={{ color: 'var(--gold-text)', fontWeight: 700 }}>✦ Milestone: </span>
+                  {founderData.achievement}
+                </p>
               </div>
 
-              <button className="btn btn-gold btn-large" onClick={() => setIsModalOpen(true)}>
-                Experience The Difference &rarr;
-              </button>
-            </div>
-
-            <div className="why-us-points reveal">
-              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="why-point-icon" data-bird-hover>01</div>
-                <div>
-                  <h4>Strategy Before Posting</h4>
-                  <p>We never post blindly. Every single piece of content has a precise purpose: to attract, educate, build deep trust, or prompt a discovery call.</p>
-                </div>
-              </div>
-              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="why-point-icon" data-bird-hover>02</div>
-                <div>
-                  <h4>Content Built Around Business Goals</h4>
-                  <p>We don't chase useless viral trends. We target decision-makers and seekers who have the desire and budget to invest in your coaching.</p>
-                </div>
-              </div>
-              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="why-point-icon" data-bird-hover>03</div>
-                <div>
-                  <h4>Strong Focus On Authentic Personal Branding</h4>
-                  <p>We extract your natural charisma, personal story, and unique worldview so that you build loyal clients, not just passive viewers.</p>
-                </div>
-              </div>
-              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="why-point-icon" data-bird-hover>04</div>
-                <div>
-                  <h4>Consistent & Proactive Communication</h4>
-                  <p>No disappearing contacts. You get direct WhatsApp access, dedicated account managers, and scheduled weekly updates.</p>
-                </div>
-              </div>
-              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="why-point-icon" data-bird-hover>05</div>
-                <div>
-                  <h4>Data-Driven Optimization</h4>
-                  <p>We review retention graphs, hook drop-off rates, and lead metrics weekly, constantly calibrating the strategy to maximize your ROI.</p>
-                </div>
-              </div>
-              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="why-point-icon" data-bird-hover>06</div>
-                <div>
-                  <h4>Customized Content Systems for Coaches</h4>
-                  <p>From Vastu remedies to Tarot spreads and spiritual awakenings, we understand your niche deeply and write scripts that sound authentic to your craft.</p>
-                </div>
-              </div>
-              <div className="why-point-item glass-card motion-card card-spotlight" data-motion="slide-right">
-                <div className="card-light-sweep" aria-hidden="true" />
-                <div className="why-point-icon" data-bird-hover>07</div>
-                <div>
-                  <h4>Focus On Both Attention AND Conversion</h4>
-                  <p>Attention gets them in the door; our conversion architecture and DM frameworks turn that attention into confirmed clients in your calendar.</p>
-                </div>
+              {/* Subtle CTA */}
+              <div className="founder-anim-item">
+                <button className="btn btn-primary" onClick={handleBookCallClick}>
+                  {founderData.ctaText}
+                </button>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FAQ SECTION */}
-      <section className="faq-section" id="faq">
+      {/* ====================================================================
+          3. RESULTS (#results) - "Does it work?"
+          ==================================================================== */}
+      <section className="results-section" id="results">
         <div className="container">
-          <div className="section-header text-center reveal">
-            <span className="section-subtitle">CLEAR ANSWERS</span>
-            <h2 className="section-title">Frequently Asked Questions</h2>
-            <p className="section-lead">Everything you need to know about working with Phonixe Media and scaling your personal brand.</p>
+          <div className="section-header">
+            <span className="section-eyebrow">{resultsData.eyebrow}</span>
+            <h2 className="section-headline">{resultsData.headline}</h2>
           </div>
 
-          <div className={`faq-accordion-container ${activeFaq !== null ? 'has-active' : ''}`}>
-            {faqs.map((f, idx) => {
-              const isOpen = activeFaq === idx;
+          {/* Prominent Highlight Card (Glassmorphism Permitted + [data-perch]) */}
+          <div className="results-highlight-card glass-permitted" data-perch>
+            <div className="perch-zone-spacer" aria-hidden="true" />
+            <div className="results-highlight-stat" data-no-cover>
+              {resultsData.highlight}
+            </div>
+            <p className="results-highlight-desc" data-no-cover>
+              {resultsData.text}
+            </p>
+            <p className="results-disclaimer" data-no-cover>
+              {resultsData.disclaimer}
+            </p>
+          </div>
+
+          {/* Metrics Grid */}
+          <div className="results-metrics-grid">
+            {resultsData.metrics
+              .filter(m => m.published || SHOW_PLACEHOLDERS)
+              .map(m => (
+                <div key={m.id} className="metric-card" data-no-cover>
+                  {!m.published && SHOW_PLACEHOLDERS && (
+                    <span className="placeholder-badge">Placeholder</span>
+                  )}
+                  <div className="metric-val">{m.value}</div>
+                  <div className="metric-lbl">{m.label}</div>
+                  <div className="metric-sub">{m.sub}</div>
+                </div>
+              ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ====================================================================
+          4. WHO WE SERVE (#who-we-serve) - "Is it for me?"
+          ==================================================================== */}
+      <section className="niches-section" id="who-we-serve">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-eyebrow">{nichesData.eyebrow}</span>
+            <h2 className="section-headline">{nichesData.headline}</h2>
+            <p className="section-subtext">{nichesData.subtext}</p>
+          </div>
+
+          <div className="niches-grid">
+            {nichesData.niches.map(niche => {
+              const IconComp = iconMap[niche.icon] || Sparkles;
               return (
-                <div className={`faq-item glass-card motion-card card-spotlight ${isOpen ? 'active' : ''}`} data-motion="rise" key={f._id || idx}>
-                  <div className="card-light-sweep" aria-hidden="true" />
-                  <button 
-                    className="faq-question" 
-                    onClick={() => {
-                      setActiveFaq(isOpen ? null : idx);
-                      setTimeout(() => {
-                        ScrollTrigger.refresh();
-                      }, 350);
-                    }}
-                  >
-                    <span>{idx + 1}. {f.question}</span>
-                    <span className="faq-toggle-icon" data-bird-hover>+</span>
-                  </button>
-                  <div className="faq-answer">
-                    <p>{f.answer}</p>
+                <div key={niche.id} className="flat-card niche-card" data-no-cover>
+                  <div className="niche-icon-box">
+                    <IconComp size={24} />
                   </div>
+                  <h3>{niche.title}</h3>
+                  <p>{niche.description}</p>
                 </div>
               );
             })}
@@ -2328,320 +538,458 @@ _Looking forward to discussing our 360° growth strategy!_`;
         </div>
       </section>
 
-      {/* FINAL CTA SECTION */}
-      <section className="final-cta-section" id="cta">
+      {/* ====================================================================
+          5. SERVICES (#services) - "What do I get?"
+          ==================================================================== */}
+      <section className="services-section" id="services">
         <div className="container">
-          <div className="cta-banner-wrapper glass-card reveal text-center motion-card card-spotlight" data-motion="scale">
-            <div className="card-light-sweep" aria-hidden="true" />
-            <img src="/assets/logo-horizontal.png" alt="Phonixe Media Brand Logo" className="cta-center-logo" />
-            <div className="cta-heading-container">
-              <h2 className="cta-main-headline">
-                {c.ctaHeadline || 'Your Brand Has Expertise. Now Give It The Visibility It Deserves.'}
-              </h2>
-              <p className="cta-subheadline">
-                {c.ctaSubheadline || 'Let’s build a social media presence that makes your audience stop, trust and take action.'}
-              </p>
-            </div>
+          <div className="section-header">
+            <span className="section-eyebrow">{servicesData.eyebrow}</span>
+            <h2 className="section-headline">{servicesData.headline}</h2>
+            <p className="section-subtext">{servicesData.subtext}</p>
+          </div>
 
-            <div className="cta-buttons-row">
-              <button className="btn btn-gold btn-xl shadow-gold-glow" onClick={() => setIsModalOpen(true)} data-magnetic-cta>
-                <span>Book Your Free Strategy Call</span>
-                <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
-                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-
-              <a 
-                href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I want to talk about growing my brand.")}`}
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="btn btn-whatsapp-large"
-                data-bird-hover
-              >
-                <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
-                  <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
-                </svg>
-                <span>Talk To Phonixe Media</span>
-              </a>
-            </div>
-
-            <div className="cta-micro-features">
-              <span>✦ Free 30-Min Strategy Audit</span>
-              <span>✦ Zero-Pressure Consultation</span>
-              <span>✦ Customized Growth Roadmap</span>
-            </div>
+          <div className="services-grid">
+            {servicesData.services.map(service => {
+              const IconComp = iconMap[service.icon] || Compass;
+              return (
+                <div key={service.id} className="flat-card service-card" data-perch>
+                  <div className="perch-zone-spacer" aria-hidden="true" />
+                  <div data-no-cover>
+                    <div className="service-icon">
+                      <IconComp size={22} />
+                    </div>
+                    <h3>{service.title}</h3>
+                    <p>{service.description}</p>
+                  </div>
+                  <button
+                    className="service-enquire-link"
+                    data-no-cover
+                    onClick={() => handleEnquireService(service.title)}
+                  >
+                    <span>Enquire</span>
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="site-footer">
-        <div className="container footer-container">
-          <div className="footer-brand-col">
-            <a href="#" onClick={(e) => handleNavClick(e, '#hero')} className="brand-logo" style={{ marginBottom: '18px' }} aria-label="Phonixe Media Home">
-              <img src="/assets/logo-horizontal.png" alt="Phonixe Media" className="footer-brand-logo" />
-            </a>
-            <p className="footer-tagline">“{c.tagline || '360° Social Media Growth & Personal Branding'}”</p>
-            <p className="footer-bio">
-              Empowering coaches, consultants, tarot readers, numerologists, and transformational mentors to turn their gifts into thriving, high-converting social media brands.
-            </p>
+      {/* ====================================================================
+          6. PROCESS (#process) - "What happens next?"
+          ==================================================================== */}
+      <section className="process-section" id="process">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-eyebrow">{processData.eyebrow}</span>
+            <h2 className="section-headline">{processData.headline}</h2>
+            <p className="section-subtext">{processData.subtext}</p>
           </div>
 
-          <div className="footer-links-col">
-            <h4 className="footer-heading">Navigation</h4>
-            <ul className="footer-menu">
-              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Services</a></li>
-              <li><a href="#niches" onClick={(e) => handleNavClick(e, '#niches')}>Coaching Niches</a></li>
-              <li><a href="#process" onClick={(e) => handleNavClick(e, '#process')}>Our 4-Step System</a></li>
-              <li><a href="#results" onClick={(e) => handleNavClick(e, '#results')}>Case Studies</a></li>
-              <li><a href="#about" onClick={(e) => handleNavClick(e, '#about')}>About</a></li>
-              <li><a href="#why-us" onClick={(e) => handleNavClick(e, '#why-us')}>Why Phonixe</a></li>
-              <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')}>FAQ</a></li>
-            </ul>
-          </div>
-
-          <div className="footer-links-col">
-            <h4 className="footer-heading">Services</h4>
-            <ul className="footer-menu">
-              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Organic Social Marketing</a></li>
-              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Shooting & Direction</a></li>
-              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Short-Form Reels</a></li>
-              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Content Strategy</a></li>
-              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Personal Branding</a></li>
-              <li><a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Lead Generation Funnels</a></li>
-            </ul>
-          </div>
-
-          <div className="footer-links-col">
-            <h4 className="footer-heading">Connect With Us</h4>
-            <ul className="footer-contact-list">
-              <li>
-                <a href={igUrl} target="_blank" rel="noopener noreferrer" className="footer-contact-item">
-                  <span>📸</span>
-                  <span>Instagram: {igHandle}</span>
-                </a>
-              </li>
-              <li>
-                <a href={`https://wa.me/${cleanWa}?text=Hi%20Phonixe%20Media`} target="_blank" rel="noopener noreferrer" className="footer-contact-item">
-                  <svg viewBox="0 0 16 16" width="18" height="18" fill="#25D366" style={{ flexShrink: 0 }}>
-                    <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
-                  </svg>
-                  <span>WhatsApp: {c.whatsappNumber || '+91 8799690069'}</span>
-                </a>
-              </li>
-              <li>
-                <a href={`mailto:${contactEmail}`} className="footer-contact-item">
-                  <span>✉️</span>
-                  <span>{contactEmail}</span>
-                </a>
-              </li>
-            </ul>
-            <div style={{ marginTop: '24px' }}>
-              <button className="btn btn-gold btn-small" onClick={() => setIsModalOpen(true)}>
-                Book Strategy Call
-              </button>
-            </div>
+          <div className="process-stepper">
+            {processData.steps.map(step => (
+              <div key={step.step} className="flat-card process-step" data-perch>
+                <div className="perch-zone-spacer" aria-hidden="true" />
+                <div className="step-num" data-no-cover>{step.step}</div>
+                <h3 data-no-cover>{step.name}</h3>
+                <div className="step-summary" data-no-cover>{step.summary}</div>
+                <p className="step-detail" data-no-cover>{step.detail}</p>
+              </div>
+            ))}
           </div>
         </div>
+      </section>
 
-        <div className="footer-bottom-bar">
-          <div className="container footer-bottom-container">
-            <p className="copyright-text">
-              &copy; {new Date().getFullYear()} {c.agencyName || 'Phonixe Media'}. All rights reserved.
-            </p>
-            <div className="legal-links">
-              <a href="#privacy" onClick={(e) => { e.preventDefault(); alert('Privacy Policy: All client information and lead data is strictly confidential.'); }}>Privacy Policy</a>
-              <span>•</span>
-              <a href="#terms" onClick={(e) => { e.preventDefault(); alert('Terms: Services provided according to mutual agreement.'); }}>Terms & Conditions</a>
-            </div>
+      {/* ====================================================================
+          7. WHY PHONIXE (#why) - "Why them?"
+          ==================================================================== */}
+      <section className="why-section" id="why">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-eyebrow">{whyUsData.eyebrow}</span>
+            <h2 className="section-headline">{whyUsData.headline}</h2>
+            <p className="section-subtext">{whyUsData.subtext}</p>
           </div>
-        </div>
-      </footer>
 
-      {/* FLOATING BACK TO TOP BUTTON (DESKTOP & MOBILE) */}
-      <button 
-        type="button"
-        className={`floating-back-to-top-btn ${isPastHero ? 'visible' : ''}`}
-        onClick={scrollToTop}
-        aria-label="Back to top"
-        title="Scroll to top"
-      >
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="18 15 12 9 6 15" />
-        </svg>
-      </button>
-
-      {/* FLOATING WHATSAPP BUTTON (DESKTOP) */}
-      <aside className="floating-whatsapp-container">
-        <div className="whatsapp-tooltip">Chat with Phonixe Team</div>
-        <a 
-          href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I'd like to scale my coaching brand.")}`}
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="floating-whatsapp-btn"
-          data-bird-hover
-          aria-label="WhatsApp"
-        >
-          <svg viewBox="0 0 16 16" width="30" height="30" fill="#FFF">
-            <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
-          </svg>
-        </a>
-      </aside>
-
-      {/* MOBILE STICKY BAR */}
-      <div className="mobile-sticky-bar">
-        <a 
-          href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(c.whatsappPrefillText || "Hi Phonixe Media, I'd like to inquire.")}`}
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="mobile-bar-btn btn-wa-mobile"
-        >
-          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor">
-            <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
-          </svg>
-          <span>WhatsApp</span>
-        </a>
-        <button className="mobile-bar-btn btn-call-mobile" onClick={() => setIsModalOpen(true)}>
-          Book Strategy Call &rarr;
-        </button>
-      </div>
-
-      {/* STRATEGY CALL BOOKING MODAL */}
-      {isModalOpen && (
-        <div 
-          className="modal-backdrop" 
-          onClick={() => setIsModalOpen(false)}
-          data-lenis-prevent="true"
-        >
-          <div 
-            className="modal-dialog glass-card" 
-            onClick={(e) => e.stopPropagation()}
-            onWheel={(e) => e.stopPropagation()}
-            data-lenis-prevent="true"
-          >
-            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)} aria-label="Close modal">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-            
-            {!modalSuccess ? (
-              <>
-                <div className="modal-header">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                    <img src="/assets/logo-horizontal.png" alt="Phonixe Logo" style={{ height: '30px', width: 'auto', objectFit: 'contain' }} />
-                    <span className="badge-gold" style={{ margin: 0, fontSize: '0.72rem' }}>Limited Strategy Slots</span>
-                  </div>
-                  <h3 style={{ fontSize: '1.6rem', color: '#fff', marginBottom: '8px' }}>Book Your Free Strategy Audit</h3>
-                  <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-                    Tell us about your brand. We will review your presence and outline a tailored roadmap to attract qualified leads.
-                  </p>
+          <div className="why-list" data-no-cover>
+            {whyUsData.points.map(pt => (
+              <div key={pt.number} className="why-row">
+                <div className="why-number">{pt.number}</div>
+                <div className="why-content">
+                  <h4>{pt.title}</h4>
+                  <p>{pt.description}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-                <form onSubmit={handleSubmitLead} className="modal-form">
+      {/* ====================================================================
+          8. CASE STUDIES (#work) - "Show me the work."
+          ==================================================================== */}
+      {publishedCaseStudies.length > 0 && (
+        <section className="case-studies-section" id="work">
+          <div className="container">
+            <div className="section-header">
+              <span className="section-eyebrow">{caseStudiesData.eyebrow}</span>
+              <h2 className="section-headline">{caseStudiesData.headline}</h2>
+              <p className="section-subtext">{caseStudiesData.subtext}</p>
+            </div>
+
+            <div className="case-studies-grid">
+              {publishedCaseStudies.map(cs => (
+                <div key={cs.id} className="flat-card case-card" data-perch>
+                  <div className="perch-zone-spacer" aria-hidden="true" />
+                  {!cs.published && SHOW_PLACEHOLDERS && (
+                    <span className="placeholder-badge">Placeholder</span>
+                  )}
+                  <h3 data-no-cover>{cs.title}</h3>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--gold-text)', fontWeight: 600 }}>
+                    {cs.niche}
+                  </span>
+
+                  <div className="case-flow" data-no-cover>
+                    <div>
+                      <span className="case-stage-label">01 Before</span>
+                      <p style={{ fontSize: '0.88rem' }}>{cs.before}</p>
+                    </div>
+                    <div>
+                      <span className="case-stage-label">02 Strategy</span>
+                      <p style={{ fontSize: '0.88rem' }}>{cs.strategy}</p>
+                    </div>
+                    <div>
+                      <span className="case-stage-label">03 Execution</span>
+                      <p style={{ fontSize: '0.88rem' }}>{cs.execution}</p>
+                    </div>
+                  </div>
+
+                  <div className="case-result-box" data-no-cover>
+                    <span className="case-stage-label">04 Result</span>
+                    <div className="case-result-val">{cs.result}</div>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)', display: 'block', marginTop: '4px' }}>
+                      {cs.disclaimer}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ====================================================================
+          9. TESTIMONIALS (#testimonials) - "Do clients vouch for them?"
+          ==================================================================== */}
+      {publishedTestimonials.length > 0 && (
+        <section className="testimonials-section" id="testimonials">
+          <div className="container">
+            <div className="section-header">
+              <span className="section-eyebrow">{testimonialsData.eyebrow}</span>
+              <h2 className="section-headline">{testimonialsData.headline}</h2>
+              <p className="section-subtext">{testimonialsData.subtext}</p>
+            </div>
+
+            <div className="testimonials-grid">
+              {publishedTestimonials.map(t => (
+                <div key={t.id} className="flat-card testimonial-card" data-no-cover>
+                  {!t.published && SHOW_PLACEHOLDERS && (
+                    <span className="placeholder-badge">Placeholder</span>
+                  )}
+                  <div style={{ color: 'var(--gold-text)', marginBottom: '14px', letterSpacing: '2px' }}>
+                    ★★★★★
+                  </div>
+                  <p className="testimonial-quote">"{t.quote}"</p>
+                  <div>
+                    <div className="testimonial-author-name">{t.name}</div>
+                    <div className="testimonial-author-role">{t.role}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ====================================================================
+          10. FAQ ACCORDION (#faq) - "Any doubts?"
+          ==================================================================== */}
+      <section className="faq-section" id="faq">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-eyebrow">{faqData.eyebrow}</span>
+            <h2 className="section-headline">{faqData.headline}</h2>
+            <p className="section-subtext">{faqData.subtext}</p>
+          </div>
+
+          <div className="faq-accordion" data-no-cover>
+            {faqData.faqs.map((item, idx) => {
+              const isOpen = activeFaq === idx;
+              return (
+                <div key={item.id} className={`faq-item ${isOpen ? 'open' : ''}`}>
+                  <button
+                    className="faq-question-btn"
+                    onClick={() => setActiveFaq(isOpen ? null : idx)}
+                    aria-expanded={isOpen}
+                  >
+                    <span>{item.question}</span>
+                    <span className="faq-chevron">▾</span>
+                  </button>
+                  {isOpen && (
+                    <div className="faq-answer">
+                      <p>{item.answer}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ====================================================================
+          11. FINAL CTA + CONTACT FORM (#contact) - "How do I start?"
+          ==================================================================== */}
+      <section className="contact-section" id="contact">
+        <div className="container contact-layout">
+          <div className="contact-header" data-no-cover>
+            <span className="section-eyebrow">START YOUR ELEVATION</span>
+            <h2 className="section-headline">Ready To Rise?</h2>
+            <p className="section-subtext">
+              Your expertise deserves more than random posting. Let's build a social presence that gets noticed, remembered and trusted.
+            </p>
+          </div>
+
+          <div className="contact-cta-buttons" data-no-cover>
+            <button className="btn btn-primary btn-large" onClick={handleBookCallClick}>
+              Book Your Free Strategy Call
+            </button>
+            <a
+              href={`https://wa.me/${cleanWaNumber}?text=${encodeURIComponent("Hi Phonixe Media, I would like to speak with Rudra Joshi regarding my brand growth.")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary btn-large"
+            >
+              <MessageCircle size={18} style={{ color: 'var(--wa-green)' }} />
+              <span>Talk To Phonixe Media</span>
+            </a>
+          </div>
+
+          <div className="booking-form-card" data-no-cover>
+            {formSuccess ? (
+              <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+                <CheckCircle2 size={54} color="var(--gold-text)" style={{ margin: '0 auto 16px' }} />
+                <h3 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Strategy Consultation Requested!</h3>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
+                  Thank you, {formState.name}. We are preparing your WhatsApp consultation window right now.
+                </p>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setFormSuccess(false)}
+                >
+                  Submit Another Inquiry
+                </button>
+              </div>
+            ) : (
+              <form className="booking-form" onSubmit={handleSubmitLead}>
+                <div className="form-row">
                   <div className="form-group">
-                    <label>Your Name *</label>
-                    <input 
-                      type="text" 
-                      required 
-                      placeholder="e.g. Priya Sharma"
+                    <label htmlFor="form-name">Full Name *</label>
+                    <input
+                      ref={nameInputRef}
+                      id="form-name"
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Ayesha Sharma"
+                      required
                       value={formState.name}
                       onChange={(e) => setFormState({ ...formState, name: e.target.value })}
                     />
                   </div>
-
-                  <div className="form-row-2">
-                    <div className="form-group">
-                      <label>WhatsApp Number *</label>
-                      <input 
-                        type="tel" 
-                        required 
-                        placeholder="+91 98765 43210"
-                        value={formState.whatsapp}
-                        onChange={(e) => setFormState({ ...formState, whatsapp: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Instagram Handle *</label>
-                      <input 
-                        type="text" 
-                        required 
-                        placeholder="@yourhandle"
-                        value={formState.instagram}
-                        onChange={(e) => setFormState({ ...formState, instagram: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
                   <div className="form-group">
-                    <label>Your Coaching / Consulting Domain *</label>
-                    <select 
+                    <label htmlFor="form-whatsapp">WhatsApp Number *</label>
+                    <input
+                      id="form-whatsapp"
+                      type="tel"
+                      className="form-input"
+                      placeholder="e.g. +91 98765 43210"
+                      required
+                      value={formState.whatsapp}
+                      onChange={(e) => setFormState({ ...formState, whatsapp: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="form-niche">Coaching / Consulting Domain *</label>
+                    <input
+                      id="form-niche"
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Tarot Reader / Numerologist / Coach"
                       required
                       value={formState.niche}
                       onChange={(e) => setFormState({ ...formState, niche: e.target.value })}
-                    >
-                      <option value="" disabled>Select your specialization</option>
-                      <option value="Tarot Readers">Tarot Readers</option>
-                      <option value="Numerologists">Numerologists</option>
-                      <option value="Vastu Experts">Vastu Experts</option>
-                      <option value="Relationship Coaches">Relationship Coaches</option>
-                      <option value="Spiritual & Healing Mentor">Spiritual & Healing Mentor</option>
-                      <option value="Akashic Record Reader">Akashic Record Reader</option>
-                      <option value="Life & Mindset Coach">Life & Mindset Coach</option>
-                      <option value="Fitness & Wellness Expert">Fitness & Wellness Expert</option>
-                      <option value="Other Service-Based Brand">Other Service-Based Brand</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>What is your primary goal right now?</label>
-                    <select 
-                      value={formState.goal}
-                      onChange={(e) => setFormState({ ...formState, goal: e.target.value })}
-                    >
-                      <option value="Generate more high-paying 1-on-1 clients">Generate more high-paying 1-on-1 clients</option>
-                      <option value="Build an authoritative, high-growth personal brand">Build an authoritative, high-growth personal brand</option>
-                      <option value="Delegate content creation & video editing completely">Delegate content creation & video editing completely</option>
-                      <option value="Fix low engagement and random posting">Fix low engagement and random posting</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Any specific questions or current challenges? (Optional)</label>
-                    <textarea 
-                      rows={2} 
-                      placeholder="Tell us what you'd like to achieve..."
-                      value={formState.message}
-                      onChange={(e) => setFormState({ ...formState, message: e.target.value })}
                     />
                   </div>
-
-                  <button type="submit" className="btn btn-gold w-full btn-large" disabled={submitting}>
-                    {submitting ? 'Submitting...' : 'Submit & Connect On WhatsApp →'}
-                  </button>
-                  <p style={{ fontSize: '0.75rem', textAlign: 'center', color: 'var(--text-dim)' }}>
-                    🔒 100% Confidential. Saved to secure CRM. No spam.
-                  </p>
-                </form>
-              </>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '30px 10px' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#25D366', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '2rem', fontWeight: 800 }}>
-                  ✓
+                  <div className="form-group">
+                    <label htmlFor="form-service">Service Interested In</label>
+                    <select
+                      id="form-service"
+                      className="form-select"
+                      value={formState.service}
+                      onChange={(e) => setFormState({ ...formState, service: e.target.value })}
+                    >
+                      {servicesData.services.map(s => (
+                        <option key={s.id} value={s.title}>{s.title}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <h3 style={{ fontSize: '1.6rem', color: '#fff', marginBottom: '10px' }}>Application Received!</h3>
-                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', marginBottom: '24px' }}>
-                  Thank you! Your request has been securely recorded. Click below to continue directly on WhatsApp.
-                </p>
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp-large">
-                  <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
-                    <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.016-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
-                  </svg>
-                  <span>Open WhatsApp Now</span>
-                </a>
-              </div>
+
+                <div className="form-group">
+                  <label htmlFor="form-instagram">Instagram Handle (Optional)</label>
+                  <input
+                    id="form-instagram"
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. @yourname.coaching"
+                    value={formState.instagram}
+                    onChange={(e) => setFormState({ ...formState, instagram: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="form-message">Notes / Specific Goals (Optional)</label>
+                  <textarea
+                    id="form-message"
+                    className="form-textarea"
+                    rows={3}
+                    placeholder="Tell us about your current followers, target revenue, or content obstacles..."
+                    value={formState.message}
+                    onChange={(e) => setFormState({ ...formState, message: e.target.value })}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary form-submit-btn"
+                  disabled={submitting}
+                >
+                  {submitting ? 'Connecting...' : 'Request Free Strategy Call →'}
+                </button>
+              </form>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* ====================================================================
+          12. FOOTER
+          ==================================================================== */}
+      <footer className="site-footer">
+        <div className="container footer-grid">
+          <div className="footer-brand">
+            <h3>PHONIXE MEDIA</h3>
+            <p className="footer-tagline">360° Social Media Growth & Personal Branding</p>
+            <p className="footer-desc">
+              Turning genuine expertise into authoritative digital brands that attract attention, build trust and convert high-ticket clients.
+            </p>
+          </div>
+
+          <div className="footer-col">
+            <h4>Navigation</h4>
+            <div className="footer-links">
+              <a href="#founder" onClick={(e) => { e.preventDefault(); scrollTo('#founder'); }}>Meet the Founder</a>
+              <a href="#results" onClick={(e) => { e.preventDefault(); scrollTo('#results'); }}>Results</a>
+              <a href="#services" onClick={(e) => { e.preventDefault(); scrollTo('#services'); }}>Services</a>
+              <a href="#process" onClick={(e) => { e.preventDefault(); scrollTo('#process'); }}>4-Step Process</a>
+              <a href="#why" onClick={(e) => { e.preventDefault(); scrollTo('#why'); }}>Why Phonixe</a>
+              <a href="#faq" onClick={(e) => { e.preventDefault(); scrollTo('#faq'); }}>FAQ</a>
+            </div>
+          </div>
+
+          <div className="footer-col">
+            <h4>Connect</h4>
+            <div className="footer-links">
+              <a href={igUrl} target="_blank" rel="noopener noreferrer">
+                Instagram: {igHandle}
+              </a>
+              <a href={`https://wa.me/${cleanWaNumber}`} target="_blank" rel="noopener noreferrer">
+                WhatsApp: {displayWaNumber}
+              </a>
+              <a href={`mailto:${agencyEmail}`}>
+                Email: {agencyEmail}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="container footer-bottom">
+          <p>© 2026 Phonixe Media. All rights reserved.</p>
+          <div className="footer-legal-links">
+            <button onClick={() => setLegalModalContent(legalData.privacyPolicy)}>
+              Privacy Policy
+            </button>
+            <span>•</span>
+            <button onClick={() => setLegalModalContent(legalData.termsAndConditions)}>
+              Terms & Conditions
+            </button>
+          </div>
+        </div>
+      </footer>
+
+      {/* ====================================================================
+          13. MOBILE STICKY BOTTOM BAR (Past Hero, hides at #contact)
+          ==================================================================== */}
+      <div className={`mobile-sticky-bar ${(!isPastHero || isContactInView) ? 'hidden' : ''}`}>
+        <button className="btn btn-primary mobile-sticky-call-btn" onClick={handleBookCallClick}>
+          Book a Free Call
+        </button>
+        <a
+          href={`https://wa.me/${cleanWaNumber}?text=${encodeURIComponent("Hi Phonixe Media, I would like to book a strategy call.")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mobile-sticky-wa-btn"
+          aria-label="Chat on WhatsApp"
+        >
+          <MessageCircle size={22} />
+        </a>
+      </div>
+
+      {/* ====================================================================
+          14. DESKTOP FLOATING WHATSAPP BUTTON (Desktop ONLY)
+          ==================================================================== */}
+      <a
+        href={`https://wa.me/${cleanWaNumber}?text=${encodeURIComponent("Hi Phonixe Media, I would like to speak with Rudra Joshi.")}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="desktop-floating-wa"
+        aria-label="Direct WhatsApp Consultation"
+      >
+        <MessageCircle className="desktop-wa-icon" />
+        <span>Chat With Phonixe Team</span>
+      </a>
+
+      {/* ====================================================================
+          15. LEGAL MODAL (Privacy Policy / Terms)
+          ==================================================================== */}
+      {legalModalContent && (
+        <div className="legal-modal-backdrop" onClick={() => setLegalModalContent(null)}>
+          <div className="legal-modal-card" onClick={(e) => e.stopPropagation()}>
+            <button className="legal-modal-close" onClick={() => setLegalModalContent(null)} aria-label="Close">
+              <X size={18} />
+            </button>
+            <h3>{legalModalContent.title}</h3>
+            <p className="legal-modal-updated">Last Updated: {legalModalContent.lastUpdated}</p>
+            <div className="legal-modal-body">
+              {legalModalContent.content.map((p, idx) => (
+                <p key={idx}>{p}</p>
+              ))}
+            </div>
           </div>
         </div>
       )}
